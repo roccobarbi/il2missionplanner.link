@@ -1,18 +1,14 @@
 # Il-2 Mission Planner
 
-| Branch       | Status         | URL |
-| ------------- |:-------------:| --- |
-| master      | [![Build Status](https://travis-ci.org/gavincabbage/il2missionplanner.com.svg?branch=master)](https://travis-ci.org/gavincabbage/il2missionplanner.com) | [il2missionplanner.com](http://il2missionplanner.com) |
-| beta      | [![Build Status](https://travis-ci.org/gavincabbage/il2missionplanner.com.svg?branch=beta)](https://travis-ci.org/gavincabbage/il2missionplanner.com) | [beta.il2missionplanner.com](http://beta.il2missionplanner.com) |
-| develop      | [![Build Status](https://travis-ci.org/gavincabbage/il2missionplanner.com.svg?branch=develop)](https://travis-ci.org/gavincabbage/il2missionplanner.com) | [dev.il2missionplanner.com](http://dev.il2missionplanner.com) |
+Welcome to the `il2missionplanner.link` repository. This repository houses the code behind the Il-2 Mission Planner tool, a simple client-side javascript application based primarily on [Leaflet](http://leafletjs.com/).
 
-Welcome to the `il2missionplanner.com` repository. This repository houses the code behind the Il-2 Mission Planner tool, a simple client-side javascript application based primarily on [Leaflet](http://leafletjs.com/).
+This project is derived from the original [il2missionplanner.com](https://github.com/gavincabbage/il2missionplanner.com) project, released under the MIT license by [Gavin Cabbage](https://github.com/gavincabbage). At the time of replicating the project, the last commit on the original one was [47a1255021d3e411333e8162a486bb6988d4d95e](https://github.com/gavincabbage/il2missionplanner.com/commit/47a1255021d3e411333e8162a486bb6988d4d95e).
 
-Check out the [latest stable release at il2missionplanner.com](http://il2missionplanner.com), or the [beta region](http://beta.il2missionplanner.com) to see work in progress.
+Once the project is online the latest stable release will become available at [il2missionplanner.link](http://il2missionplanner.link), the beta release may become available at [beta.il2missionplanner.link](http://beta.il2missionplanner.link). At the time of writing this readme file, I haven't been able to estimate the infastructure cost yet, therefore I can't promise that the website won't be behind a paywall (likely a very small fee to cover costs only).
 
 ## Issues and Enhancements
 
-If you'd like to report a bug or request an enhancement, please [open an issue](https://github.com/gavincabbage/il2missionplanner.com/issues).
+If you'd like to report a bug or request an enhancement, please [open an issue](https://github.com/roccobarbi/il2missionplanner.link/issues).
 
 ## Contributing
 
@@ -24,4 +20,4 @@ Clone the repository. In the repository directory, run `npm install` followed by
 
 ## Contact
 
-Feedback, questions or comments? [Reach out to me here on Github](https://github.com/gavincabbage) or contact me on the [Il-2 forums](http://forum.il2sturmovik.com/user/90440-curiousgamblerr/)!
+Feedback, questions or comments? [Reach out to me here on Github](https://github.com/roccobarbi)!
