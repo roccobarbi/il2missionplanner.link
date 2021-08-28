@@ -12,7 +12,35 @@ If you'd like to report a bug or request an enhancement, please [open an issue](
 
 ## Contributing
 
-Interested in contributing to this tool? Feel free to fork the project and open a PR when you're ready to contribute back. The code is under the MIT license, so you can basically do whatever you like with it.
+This is a free and open source project, I appreciate any help anyone is willing to give.
+
+Before you jump into the code, I kindly ask you to read the following sections.
+
+### Other il2missionplanner.link repositories
+
+There are a few other il2missionplanner.link repositories that you can check:
+- [tiles.il2missionplanner.link](https://github.com/roccobarbi/tiles.il2missionplanner.link)
+- [api.il2missionplanner.link](https://github.com/roccobarbi/api.il2missionplanner.link)
+- [testing.il2missionplanner.link](https://github.com/roccobarbi/testing.il2missionplanner.link)
+- [stream.il2missionplanner.link](https://github.com/roccobarbi/stream.il2missionplanner.link)
+
+### Tracking requests and ongoing work
+
+[Github issues](https://github.com/roccobarbi/il2missionplanner.link/issues) are used by this project to track any request (bugs, enhancements, documentation...). They are a good starting point where you can look for work that needs to be done. Please do comment them, take part to the discussion (if any discussion is going on) and feel free to assign an issue to yourself.
+
+[Github projects](https://github.com/roccobarbi/il2missionplanner.link/projects) are used to keep track of what is going on vs. what was required. [This specific project](https://github.com/roccobarbi/il2missionplanner.link/projects/1) tracks the issues as they are worked on.
+
+### Rules for contributing to the project
+
+If you want to contribute to this project, please follow the following, few rules:
+1. check the open issues before starting to write code;
+1. if you want to contribute with something that has not been tracked with an issue, open the issue yourself;
+1. assign to yourself the issue to which you wish to contribute (only one at a time, please);
+1. make sure that the issue's card in the project's kanban table moves to the "in progress" swimlane;
+1. fork the repository or make sure that it is up to date;
+1. create a feature branch with the format **{username}-issue-{issueId}-{description}** (the description should be short, e.g. for updating the readme I used roccobarbi-issue-0001-improve-readme);
+1. when your addition is ready, check again that the repository is up to date with the upstream's main, or branch protection rules will prevent you from opening a PR;
+1. finally, open a pull request and monitor it for any ongoing discussion.
 
 ## Development Setup
 
