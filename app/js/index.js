@@ -565,13 +565,26 @@
     mapConfig = util.getSelectedMapConfig(window.location.hash , content.maps);
     selectedMapIndex = mapConfig.selectIndex;
 
-    // Reference: https://leafletjs.com/reference-1.7.1.html#map-example
-    // L.CRS.Simple is "a simple C0ordinate Reference System that maps longitude and latitude into x and y directly".
+    /*
+     * Reference: https://leafletjs.com/reference-1.7.1.html#map-example
+     *
+     * L.CRS.Simple is "a simple C0ordinate Reference System that maps longitude and latitude into x and y directly".
+     */
     map = L.map('map', {
         crs: L.CRS.Simple,
         attributionControl: false
     });
 
+    /*
+    * Reference: https://leafletjs.com/reference-1.7.1.html#tilelayer
+    *
+    * tms, if true, inverses Y axis numbering for tiles. Since it is true, here is the wikipedia definition of TMS:
+    * https://en.wikipedia.org/wiki/Tile_Map_Service
+    *
+    * The code probably needs to be updated. In the current version of leaflet, the noWrap property can only be found in
+    * the gridLayer object. There is also no reference to the continuousWorld property.
+    * TODO: update this code to the current version of leaflet.
+    */
     mapTiles = L.tileLayer(mapConfig.tileUrl, {
         minZoom: mapConfig.minZoom,
         maxZoom: mapConfig.maxZoom,
@@ -580,15 +593,30 @@
         continuousWorld: true
     }).addTo(map);
 
+    /*
+    * latMin and lngMin should always be set to zero in the map configuration, or calc.center won't work.
+    * Everything else seems to be up to date with the current version of leaflet.
+    */
     map.setView(calc.center(mapConfig), mapConfig.defaultZoom);
     map.setMaxBounds(calc.maxBounds(mapConfig));
 
+    /*
+    * Set up a series of layer groups, so that layers can be easily managed later in the code.
+    * This part seems to be up to date with the current version of leaflet.
+    */
     drawnItems = L.featureGroup();
     map.addLayer(drawnItems);
     frontline = L.featureGroup();
     map.addLayer(frontline);
     hiddenLayers = L.featureGroup();
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * L.Control.TitleControl is defined in control.js
+    * L.Control.CustomToolbar is defined in control.js
+    * L.Control.Draw is not. TODO: find out where Draw is defined.
+    */
     drawControl = new L.Control.Draw({
         draw: {
             polygon: false,
