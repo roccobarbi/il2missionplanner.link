@@ -6,11 +6,11 @@
     var content = require('./content.js');
     var calc = require('./calc.js');
     var util = require('./util.js');
-    var icons = require('./icons.js')(L);
+    var icons = require('./icons.js')(L); // The L object is created by Leaflet
     var webdis = require('./webdis.js');
     require('./controls.js');
 
-    var conf = JSON.parse(fs.readFileSync('dist/conf.json', 'utf8'));
+    var conf = JSON.parse(fs.readFileSync('dist/conf.json', 'utf8')); // The path probably reflects how the application is packaged by npm
 
     const
         RED = '#9A070B',
@@ -39,6 +39,7 @@
     };
 
     // Patch a leaflet bug, see https://github.com/bbecquet/Leaflet.PolylineDecorator/issues/17
+    // TODO: check if this is still required on newer versions of leaflet
     L.PolylineDecorator.include(L.Mixin.Events);
 
     // Patch leaflet content with custom language
@@ -51,6 +52,21 @@
       return drawnItems.getLayers().length === 0 && frontline.getLayers().length === 0;
     }
 
+    /**
+     * newFlightDecorator draws a route on the map.
+     *
+     * The route can be expressed as:
+     * - L.Polyline
+     * - L.Polygon
+     * - an array of L.LatLng, or with Leaflet's simplified syntax, an array of 2-cells arrays of coordinates (useful if
+     *   you just want to draw patterns following coordinates, but not the line itself)
+     * - an array of any of these previous types, to apply the same patterns to multiple lines
+     *
+     * Dependency: https://github.com/bbecquet/Leaflet.PolylineDecorator
+     *
+     * @param route the route to be drawn on the map
+     * @returns {*}
+     */
     function newFlightDecorator(route) {
         return L.polylineDecorator(route, {
             patterns: [
@@ -71,7 +87,7 @@
 
     function applyCustomFlightLeg(marker) {
         if (state.changing || state.connected) {
-            return;
+            return; // TODO: understand what these states mean
         }
         var parentRoute = drawnItems.getLayer(marker.parentId);
         map.openModal({
@@ -527,6 +543,7 @@
 
 
     // if hash is not in map list, try to get json for that server
+    // TODO: check if this API call is really necessary for a MVP
     if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
         var responseBody = null;
         var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);
@@ -540,9 +557,16 @@
         });
     }
 
+    /*
+    * The map configuration is a JSON object that describes each map. All map configurations can be found in content.js,
+    * in the mapConfigs variable.
+    * selectIndex is an integer index, unique to each map, starting from 1 for the stalingrad map.
+    */
     mapConfig = util.getSelectedMapConfig(window.location.hash , content.maps);
     selectedMapIndex = mapConfig.selectIndex;
 
+    // Reference: https://leafletjs.com/reference-1.7.1.html#map-example
+    // L.CRS.Simple is "a simple C0ordinate Reference System that maps longitude and latitude into x and y directly".
     map = L.map('map', {
         crs: L.CRS.Simple,
         attributionControl: false
