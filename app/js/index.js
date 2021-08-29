@@ -612,10 +612,11 @@
 
     /*
     * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    * Reference for L.Control.Draw: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html
     *
     * L.Control.TitleControl is defined in control.js
     * L.Control.CustomToolbar is defined in control.js
-    * L.Control.Draw is not. TODO: find out where Draw is defined.
+    * L.Control.Draw is an external library
     */
     drawControl = new L.Control.Draw({
         draw: {
@@ -679,6 +680,12 @@
     });
     map.addControl(clearButton);
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * This specific toolbar component manages the map settings (e.g. which map has been selected) and the help.
+    * Its UI is based on app/html/settingsModal.html and app/html/helpModal.html
+    */
     var helpSettingsToolbar = new L.Control.CustomToolbar({
         position: 'bottomright',
         buttons: [
@@ -756,6 +763,17 @@
     });
     map.addControl(helpSettingsToolbar);
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * This specific toolbar component manages:
+    * - the import and export features for maps;
+    * - the stream feature.
+    *
+    * TODO: analyse how the streaming feature is managed in the frontend.
+    * TODO: analyse how the streaming server works (or more likely, reengineer it).
+    * TODO: rewrite component based on new streaming server
+    */
     var importExportToolbar = new L.Control.CustomToolbar({
         position: 'bottomleft',
         buttons: [
@@ -1000,6 +1018,13 @@
     });
     map.addControl(importExportToolbar);
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * This component lets the user jump to a specific grid reference on the map.
+    *
+    * The UI is based on: app/html/gridJumpModal.html
+    */
     var gridToolbar = new L.Control.CustomToolbar({
         position: 'topleft',
         buttons: [
@@ -1047,6 +1072,11 @@
     });
     map.addControl(gridToolbar);
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * When a new vector or marker is created, add the relevant layer to the map.
+    */
     map.on('draw:created', function(e) {
         drawnItems.addLayer(e.layer);
         if (e.layerType === 'polyline') {
@@ -1057,12 +1087,22 @@
         checkButtonsDisabled();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * When a new vector or marker is deleted, remove the relevant layer from the map.
+    */
     map.on('draw:deleted', function(e) {
         deleteAssociatedLayers(e.layers);
         publishMapState();
         checkButtonsDisabled();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * When a new vector or marker is changed, apply changes on the map.
+    */
     map.on('draw:edited', function(e) {
         deleteAssociatedLayers(e.layers);
         e.layers.eachLayer(function(layer) {
@@ -1076,28 +1116,55 @@
         publishMapState();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage editing.
+    */
     map.on('draw:editstart', function() {
         state.changing = true;
         hideChildLayers();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage editing.
+    */
     map.on('draw:editstop', function() {
         state.changing = false;
         showChildLayers();
         checkButtonsDisabled();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage deleting.
+    */
     map.on('draw:deletestart', function() {
         state.changing = true;
         hideChildLayers();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage deleting.
+    */
     map.on('draw:deletestop', function() {
         state.changing = false;
         showChildLayers();
         checkButtonsDisabled();
     });
 
+    /*
+    * Manage the il2:streamerror DOM event
+    *
+    * NOTE: this may be responsible for the page not loading.
+    * TODO: check what generates the event.
+    * TODO: refatctor as function, so it can easily be removed and added again later
+    */
     window.addEventListener('il2:streamerror', function (e) {
         if (!state.connected) {
             return;
@@ -1105,6 +1172,13 @@
         util.addClass(document.querySelector('a.fa-share-alt'), 'stream-error');
     });
 
+    /*
+    * Manage the il2:streamupdate DOM event
+    *
+    * NOTE: this may be responsible for the page not loading.
+    * TODO: check what generates the event.
+    * TODO: refatctor as function, so it can easily be removed and added again later
+    */
     window.addEventListener('il2:streamupdate', function (e) {
         if (!state.connected) {
             return;
