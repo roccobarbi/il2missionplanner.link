@@ -1,3 +1,9 @@
+/*
+Several utility functions to calculate values such as:
+- the flight time based on speed and distance (time);
+- the heading between two points (heading, geometricDegreesToGeographic);
+- the distance between two points on the map (distance).
+ */
 module.exports = (function() {
 
     const
