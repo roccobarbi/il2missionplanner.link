@@ -387,6 +387,11 @@
         });
     }
 
+    /**
+     * Remove the child layers associated to a certain parent layer.
+     *
+     * @param parentLayers one or more parent layers
+     */
     function deleteAssociatedLayers(parentLayers) {
         var toDelete = [];
         parentLayers.eachLayer(function(layer) {
@@ -405,6 +410,12 @@
         });
     }
 
+    /**
+     * Move all child layers of a certain parent layer to another layer.
+     *
+     * @param from source layer
+     * @param to destination layer
+     */
     function transferChildLayers(from, to) {
         from.eachLayer(function(layer) {
             if (typeof layer.parentId !== 'undefined') {
@@ -414,14 +425,25 @@
         });
     }
 
+    /**
+     * Show the hidden layers on the map.
+     */
     function showChildLayers() {
         transferChildLayers(hiddenLayers, map);
     }
 
+    /**
+     * Hide the layers from the map
+     */
     function hideChildLayers() {
         transferChildLayers(map, hiddenLayers);
     }
 
+    /**
+     * Disable one or more buttons, identified by their id.
+     *
+     * @param buttonList an array of one or more ids of buttons
+     */
     function disableButtons(buttonList) {
         for (var i = 0; i < buttonList.length; i++) {
             var element = document.getElementById(buttonList[i]);
@@ -429,6 +451,11 @@
         }
     }
 
+    /**
+     * Enable one or more buttons, identified by their id.
+     *
+     * @param buttonList an array of one or more ids of buttons
+     */
     function enableButtons(buttonList) {
         for (var i = 0; i < buttonList.length; i++) {
             var element = document.getElementById(buttonList[i]);
@@ -436,9 +463,12 @@
         }
     }
 
+    /**
+     * Disable buttons if the map is empty, otherwise enable them.
+     */
     function checkButtonsDisabled() {
         var buttons = ['export-button', 'missionhop-button'];
-        if (!state.connected) {
+        if (!state.connected) { // TODO: understand the purpose of this check
             buttons.push('clear-button');
         }
         if (mapIsEmpty()) {
@@ -448,6 +478,9 @@
         }
     }
 
+    /**
+     * Clear all layers.
+     */
     function clearMap() {
         drawnItems.clearLayers();
         frontline.clearLayers();
@@ -456,6 +489,11 @@
         publishMapState();
     }
 
+    /**
+     * Stores the map state (including all markers and waypoints) to a JavaScript object.
+     *
+     * @returns {{routes: *[], mapHash: *, points: *[]}}
+     */
     function exportMapState() {
         var saveData = {
             mapHash: window.location.hash,
@@ -482,6 +520,10 @@
         return saveData;
     }
 
+    /**
+     * Select a map and display it (do nothing if it's already displayed).
+     * @param selectedMapConfig
+     */
     function selectMap(selectedMapConfig) {
         var newIndex = selectedMapConfig.selectIndex;
         if (newIndex !== selectedMapIndex) {
@@ -503,10 +545,20 @@
         }
     }
 
+    /**
+     * Resize the map to fit all drawn items as well as possible into the viewport.
+     */
     function fitViewToMission() {
         map.fitBounds(drawnItems.getBounds());
     }
 
+    /**
+     * Given a map state, it returns the class that should be used to display text on the map.
+     * TODO: check if this process can be simplified directly via the UI. This feels like a magic number.
+     *
+     * @param state
+     * @returns {string}
+     */
     function getMapTextClasses(state) {
         var classes = 'map-text';
         if (state.colorsInverted) {
@@ -518,6 +570,11 @@
         return classes;
     }
 
+    /**
+     * Given an object with a map's state (saved using the function exportMapState), import it and show it.
+     *
+     * @param saveData
+     */
     function importMapState(saveData) {
         clearMap();
         var importedMapConfig = util.getSelectedMapConfig(saveData.mapHash, content.maps);
