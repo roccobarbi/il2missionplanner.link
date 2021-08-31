@@ -28,6 +28,25 @@
     var map, mapTiles, mapConfig, drawnItems, hiddenLayers, frontline,
             drawControl, selectedMapIndex;
 
+    /*
+    * Application state
+    *
+    * state.changing and state.connected are checked through this file to enable or disable features
+    *
+    * state.connect is set true:
+    * - by the stream-connect button, if the connection is successful
+    *
+    * state.connected is set false:
+    * - by the disconnect button
+    *
+    * state.changing is set true:
+    * - on the editstart event
+    * - on the deletestart event
+    *
+    * state.changing is set false:
+    * - on the editstop event
+    * - on the deletestop event
+    * */
     var state = {
         colorsInverted: false,
         showBackground: true,
@@ -48,6 +67,11 @@
     // Initialize form validation
     var V = new Validatinator(content.validatinatorConfig);
 
+    /**
+     * True if the map is empty.
+     *
+     * @returns {boolean}
+     */
     function mapIsEmpty() {
       return drawnItems.getLayers().length === 0 && frontline.getLayers().length === 0;
     }
@@ -85,9 +109,14 @@
         });
     }
 
+    /**
+     * Given a new flight leg marker, calculate the new flight leg and draw it on the map.
+     *
+     * @param marker
+     */
     function applyCustomFlightLeg(marker) {
         if (state.changing || state.connected) {
-            return; // TODO: understand what these states mean
+            return; // Do nothing if the map is changing, or if the user is connected to a stream
         }
         var parentRoute = drawnItems.getLayer(marker.parentId);
         map.openModal({
@@ -119,6 +148,11 @@
         });
     }
 
+    /**
+     * When a new flight leg is added, calculate the flight time based on speed and distance and use this information,
+     * together with the heading, to draw the flight leg on the map.
+     * @param marker
+     */
     function applyCustomFlightLegCallback(marker) {
         marker.options.time = util.formatTime(calc.time(marker.options.speed, marker.options.distance));
         var newContent = util.formatFlightLegMarker(
@@ -127,6 +161,12 @@
         publishMapState();
     }
 
+    /**
+     * Calculate distances, headings, etc. for a new flight plan and apply it to the map.
+     *
+     * @param route
+     * @param newFlight
+     */
     function applyFlightPlanCallback(route, newFlight) {
         function routeClickHandlerFactory(clickedRoute) {
             return function() {
@@ -156,7 +196,7 @@
         if (typeof route.speeds === 'undefined' || route.speedDirty || route.wasEdited) {
             route.speeds = util.defaultSpeedArray(route.speed, coords.length-1);
         }
-        for (var i = 0; i < coords.length-1; i++) {
+        for (var i = 0; i < coords.length-1; i++) { // TODO: good candidate to extract a function
             var distance = mapConfig.scale * calc.distance(coords[i], coords[i+1]);
             var heading = calc.heading(coords[i], coords[i+1]);
             var midpoint = calc.midpoint(coords[i], coords[i+1]);
@@ -174,7 +214,7 @@
             marker.on('click', markerClickHandlerFactory(marker));
             marker.addTo(map);
         }
-        var endMarker = L.circleMarker(coords[coords.length-1], {
+        var endMarker = L.circleMarker(coords[coords.length-1], { // TODO: good candidate to extract a function
             clickable: false,
             radius: 3,
             color: RED,
@@ -195,6 +235,11 @@
         publishMapState();
     }
 
+    /**
+     * Manage the user actions that enter a new flight plan.
+     *
+     * @param route
+     */
     function applyFlightPlan(route) {
         if (state.changing || state.connected) {
             return;
@@ -242,6 +287,12 @@
         });
     }
 
+    /**
+     * Applies a target to the map.
+     *
+     * @param target
+     * @param newTarget
+     */
     function applyTargetInfoCallback(target, newTarget) {
         function targetClickHandlerFactory(clickedTarget) {
             return function() {
@@ -274,6 +325,11 @@
         publishMapState();
     }
 
+    /**
+     * Manage the user actions that enter a new target.
+     *
+     * @param target
+     */
     function applyTargetInfo(target) {
         if (state.changing || state.connected) {
             return;
