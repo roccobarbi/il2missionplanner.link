@@ -1,9 +1,12 @@
+/*
+* This package manages the connection to the il2missionplanner API.
+* */
 module.exports = (function() {
 
     var util = require('./util.js');
 
     const
-        WEBDIS_HOST = 'https://api.il2missionplanner.com:80'
+        WEBDIS_HOST = 'https://api.il2missionplanner.com:80' // TODO: make this more easily configurable (no magic numbers)
     ;
 
     return {
@@ -39,6 +42,14 @@ module.exports = (function() {
             });
         },
 
+        /**
+         * hmget makes the initial call to the API that checks their status.
+         * TODO: verify where and how this is used, as it appears to be blockign the page when the API is down
+         *
+         * @param key
+         * @param fields
+         * @returns {*}
+         */
         hmget: function(key, fields) {
             var url = this._buildHmgetUrl(key, fields);
             var response = util.buildSyncGetXhr(url);

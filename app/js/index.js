@@ -6,11 +6,11 @@
     var content = require('./content.js');
     var calc = require('./calc.js');
     var util = require('./util.js');
-    var icons = require('./icons.js')(L);
+    var icons = require('./icons.js')(L); // The L object is created by Leaflet
     var webdis = require('./webdis.js');
     require('./controls.js');
 
-    var conf = JSON.parse(fs.readFileSync('dist/conf.json', 'utf8'));
+    var conf = JSON.parse(fs.readFileSync('dist/conf.json', 'utf8')); // The path probably reflects how the application is packaged by npm
 
     const
         RED = '#9A070B',
@@ -28,6 +28,25 @@
     var map, mapTiles, mapConfig, drawnItems, hiddenLayers, frontline,
             drawControl, selectedMapIndex;
 
+    /*
+    * Application state
+    *
+    * state.changing and state.connected are checked through this file to enable or disable features
+    *
+    * state.connect is set true:
+    * - by the stream-connect button, if the connection is successful
+    *
+    * state.connected is set false:
+    * - by the disconnect button
+    *
+    * state.changing is set true:
+    * - on the editstart event
+    * - on the deletestart event
+    *
+    * state.changing is set false:
+    * - on the editstop event
+    * - on the deletestop event
+    * */
     var state = {
         colorsInverted: false,
         showBackground: true,
@@ -35,10 +54,11 @@
         connected: false,
         changing: false,
         streamInfo: {},
-        streamingAvailable: webdis.init()
+        streamingAvailable: webdis.init() // TODO: check if this can be safely removed, this call hangs when the API is down and it should be asyncrhronous
     };
 
     // Patch a leaflet bug, see https://github.com/bbecquet/Leaflet.PolylineDecorator/issues/17
+    // TODO: check if this is still required on newer versions of leaflet
     L.PolylineDecorator.include(L.Mixin.Events);
 
     // Patch leaflet content with custom language
@@ -47,10 +67,30 @@
     // Initialize form validation
     var V = new Validatinator(content.validatinatorConfig);
 
+    /**
+     * True if the map is empty.
+     *
+     * @returns {boolean}
+     */
     function mapIsEmpty() {
       return drawnItems.getLayers().length === 0 && frontline.getLayers().length === 0;
     }
 
+    /**
+     * newFlightDecorator draws a route on the map.
+     *
+     * The route can be expressed as:
+     * - L.Polyline
+     * - L.Polygon
+     * - an array of L.LatLng, or with Leaflet's simplified syntax, an array of 2-cells arrays of coordinates (useful if
+     *   you just want to draw patterns following coordinates, but not the line itself)
+     * - an array of any of these previous types, to apply the same patterns to multiple lines
+     *
+     * Dependency: https://github.com/bbecquet/Leaflet.PolylineDecorator
+     *
+     * @param route the route to be drawn on the map
+     * @returns {*}
+     */
     function newFlightDecorator(route) {
         return L.polylineDecorator(route, {
             patterns: [
@@ -69,9 +109,14 @@
         });
     }
 
+    /**
+     * Given a new flight leg marker, calculate the new flight leg and draw it on the map.
+     *
+     * @param marker
+     */
     function applyCustomFlightLeg(marker) {
         if (state.changing || state.connected) {
-            return;
+            return; // Do nothing if the map is changing, or if the user is connected to a stream
         }
         var parentRoute = drawnItems.getLayer(marker.parentId);
         map.openModal({
@@ -103,6 +148,11 @@
         });
     }
 
+    /**
+     * When a new flight leg is added, calculate the flight time based on speed and distance and use this information,
+     * together with the heading, to draw the flight leg on the map.
+     * @param marker
+     */
     function applyCustomFlightLegCallback(marker) {
         marker.options.time = util.formatTime(calc.time(marker.options.speed, marker.options.distance));
         var newContent = util.formatFlightLegMarker(
@@ -111,6 +161,12 @@
         publishMapState();
     }
 
+    /**
+     * Calculate distances, headings, etc. for a new flight plan and apply it to the map.
+     *
+     * @param route
+     * @param newFlight
+     */
     function applyFlightPlanCallback(route, newFlight) {
         function routeClickHandlerFactory(clickedRoute) {
             return function() {
@@ -140,7 +196,7 @@
         if (typeof route.speeds === 'undefined' || route.speedDirty || route.wasEdited) {
             route.speeds = util.defaultSpeedArray(route.speed, coords.length-1);
         }
-        for (var i = 0; i < coords.length-1; i++) {
+        for (var i = 0; i < coords.length-1; i++) { // TODO: good candidate to extract a function
             var distance = mapConfig.scale * calc.distance(coords[i], coords[i+1]);
             var heading = calc.heading(coords[i], coords[i+1]);
             var midpoint = calc.midpoint(coords[i], coords[i+1]);
@@ -158,7 +214,7 @@
             marker.on('click', markerClickHandlerFactory(marker));
             marker.addTo(map);
         }
-        var endMarker = L.circleMarker(coords[coords.length-1], {
+        var endMarker = L.circleMarker(coords[coords.length-1], { // TODO: good candidate to extract a function
             clickable: false,
             radius: 3,
             color: RED,
@@ -179,6 +235,11 @@
         publishMapState();
     }
 
+    /**
+     * Manage the user actions that enter a new flight plan.
+     *
+     * @param route
+     */
     function applyFlightPlan(route) {
         if (state.changing || state.connected) {
             return;
@@ -226,6 +287,12 @@
         });
     }
 
+    /**
+     * Applies a target to the map.
+     *
+     * @param target
+     * @param newTarget
+     */
     function applyTargetInfoCallback(target, newTarget) {
         function targetClickHandlerFactory(clickedTarget) {
             return function() {
@@ -258,6 +325,11 @@
         publishMapState();
     }
 
+    /**
+     * Manage the user actions that enter a new target.
+     *
+     * @param target
+     */
     function applyTargetInfo(target) {
         if (state.changing || state.connected) {
             return;
@@ -315,6 +387,11 @@
         });
     }
 
+    /**
+     * Remove the child layers associated to a certain parent layer.
+     *
+     * @param parentLayers one or more parent layers
+     */
     function deleteAssociatedLayers(parentLayers) {
         var toDelete = [];
         parentLayers.eachLayer(function(layer) {
@@ -333,6 +410,12 @@
         });
     }
 
+    /**
+     * Move all child layers of a certain parent layer to another layer.
+     *
+     * @param from source layer
+     * @param to destination layer
+     */
     function transferChildLayers(from, to) {
         from.eachLayer(function(layer) {
             if (typeof layer.parentId !== 'undefined') {
@@ -342,14 +425,25 @@
         });
     }
 
+    /**
+     * Show the hidden layers on the map.
+     */
     function showChildLayers() {
         transferChildLayers(hiddenLayers, map);
     }
 
+    /**
+     * Hide the layers from the map
+     */
     function hideChildLayers() {
         transferChildLayers(map, hiddenLayers);
     }
 
+    /**
+     * Disable one or more buttons, identified by their id.
+     *
+     * @param buttonList an array of one or more ids of buttons
+     */
     function disableButtons(buttonList) {
         for (var i = 0; i < buttonList.length; i++) {
             var element = document.getElementById(buttonList[i]);
@@ -357,6 +451,11 @@
         }
     }
 
+    /**
+     * Enable one or more buttons, identified by their id.
+     *
+     * @param buttonList an array of one or more ids of buttons
+     */
     function enableButtons(buttonList) {
         for (var i = 0; i < buttonList.length; i++) {
             var element = document.getElementById(buttonList[i]);
@@ -364,9 +463,12 @@
         }
     }
 
+    /**
+     * Disable buttons if the map is empty, otherwise enable them.
+     */
     function checkButtonsDisabled() {
         var buttons = ['export-button', 'missionhop-button'];
-        if (!state.connected) {
+        if (!state.connected) { // TODO: understand the purpose of this check
             buttons.push('clear-button');
         }
         if (mapIsEmpty()) {
@@ -376,6 +478,9 @@
         }
     }
 
+    /**
+     * Clear all layers.
+     */
     function clearMap() {
         drawnItems.clearLayers();
         frontline.clearLayers();
@@ -384,6 +489,11 @@
         publishMapState();
     }
 
+    /**
+     * Stores the map state (including all markers and waypoints) to a JavaScript object.
+     *
+     * @returns {{routes: *[], mapHash: *, points: *[]}}
+     */
     function exportMapState() {
         var saveData = {
             mapHash: window.location.hash,
@@ -410,6 +520,10 @@
         return saveData;
     }
 
+    /**
+     * Select a map and display it (do nothing if it's already displayed).
+     * @param selectedMapConfig
+     */
     function selectMap(selectedMapConfig) {
         var newIndex = selectedMapConfig.selectIndex;
         if (newIndex !== selectedMapIndex) {
@@ -431,10 +545,20 @@
         }
     }
 
+    /**
+     * Resize the map to fit all drawn items as well as possible into the viewport.
+     */
     function fitViewToMission() {
         map.fitBounds(drawnItems.getBounds());
     }
 
+    /**
+     * Given a map state, it returns the class that should be used to display text on the map.
+     * TODO: check if this process can be simplified directly via the UI. This feels like a magic number.
+     *
+     * @param state
+     * @returns {string}
+     */
     function getMapTextClasses(state) {
         var classes = 'map-text';
         if (state.colorsInverted) {
@@ -446,6 +570,11 @@
         return classes;
     }
 
+    /**
+     * Given an object with a map's state (saved using the function exportMapState), import it and show it.
+     *
+     * @param saveData
+     */
     function importMapState(saveData) {
         clearMap();
         var importedMapConfig = util.getSelectedMapConfig(saveData.mapHash, content.maps);
@@ -489,6 +618,9 @@
         }
     }
 
+    /**
+     * If the user is streaming his map, publish the current state, so that anyone who subscribed to it can see it.
+     */
     function publishMapState() {
         if (state.streaming) {
             var saveData = exportMapState();
@@ -497,11 +629,21 @@
         }
     }
 
+    /**
+     * Remove some controls to start working in connected mode.
+     *
+     * TODO: check why this is required.
+     */
     function startConnectedMode() {
         map.removeControl(drawControl);
         map.removeControl(clearButton);
     }
 
+    /**
+     * Add some controls to stop working in connected mode.
+     *
+     * TODO: check why this is required.
+     */
     function endConnectedMode() {
         map.removeControl(gridToolbar);
         map.removeControl(importExportToolbar);
@@ -512,6 +654,12 @@
         checkButtonsDisabled();
     }
 
+    /**
+     * Set up a certain checkbox and element, so that if the checkbox is unchecked the element is hidden, and if the
+     * checkbox is checked, the element is visible.
+     * @param checkboxId
+     * @param elementId
+     */
     function setupCheckboxTogglableElement(checkboxId, elementId) {
         var checkbox = document.getElementById(checkboxId);
         var element = document.getElementById(elementId);
@@ -527,6 +675,7 @@
 
 
     // if hash is not in map list, try to get json for that server
+    // TODO: check if this API call is really necessary for a MVP
     if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
         var responseBody = null;
         var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);
@@ -540,14 +689,34 @@
         });
     }
 
+    /*
+    * The map configuration is a JSON object that describes each map. All map configurations can be found in content.js,
+    * in the mapConfigs variable.
+    * selectIndex is an integer index, unique to each map, starting from 1 for the stalingrad map.
+    */
     mapConfig = util.getSelectedMapConfig(window.location.hash , content.maps);
     selectedMapIndex = mapConfig.selectIndex;
 
+    /*
+     * Reference: https://leafletjs.com/reference-1.7.1.html#map-example
+     *
+     * L.CRS.Simple is "a simple C0ordinate Reference System that maps longitude and latitude into x and y directly".
+     */
     map = L.map('map', {
         crs: L.CRS.Simple,
         attributionControl: false
     });
 
+    /*
+    * Reference: https://leafletjs.com/reference-1.7.1.html#tilelayer
+    *
+    * tms, if true, inverses Y axis numbering for tiles. Since it is true, here is the wikipedia definition of TMS:
+    * https://en.wikipedia.org/wiki/Tile_Map_Service
+    *
+    * The code probably needs to be updated. In the current version of leaflet, the noWrap property can only be found in
+    * the gridLayer object. There is also no reference to the continuousWorld property.
+    * TODO: update this code to the current version of leaflet.
+    */
     mapTiles = L.tileLayer(mapConfig.tileUrl, {
         minZoom: mapConfig.minZoom,
         maxZoom: mapConfig.maxZoom,
@@ -556,15 +725,31 @@
         continuousWorld: true
     }).addTo(map);
 
+    /*
+    * latMin and lngMin should always be set to zero in the map configuration, or calc.center won't work.
+    * Everything else seems to be up to date with the current version of leaflet.
+    */
     map.setView(calc.center(mapConfig), mapConfig.defaultZoom);
     map.setMaxBounds(calc.maxBounds(mapConfig));
 
+    /*
+    * Set up a series of layer groups, so that layers can be easily managed later in the code.
+    * This part seems to be up to date with the current version of leaflet.
+    */
     drawnItems = L.featureGroup();
     map.addLayer(drawnItems);
     frontline = L.featureGroup();
     map.addLayer(frontline);
     hiddenLayers = L.featureGroup();
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    * Reference for L.Control.Draw: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html
+    *
+    * L.Control.TitleControl is defined in control.js
+    * L.Control.CustomToolbar is defined in control.js
+    * L.Control.Draw is an external library
+    */
     drawControl = new L.Control.Draw({
         draw: {
             polygon: false,
@@ -627,6 +812,12 @@
     });
     map.addControl(clearButton);
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * This specific toolbar component manages the map settings (e.g. which map has been selected) and the help.
+    * Its UI is based on app/html/settingsModal.html and app/html/helpModal.html
+    */
     var helpSettingsToolbar = new L.Control.CustomToolbar({
         position: 'bottomright',
         buttons: [
@@ -704,6 +895,17 @@
     });
     map.addControl(helpSettingsToolbar);
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * This specific toolbar component manages:
+    * - the import and export features for maps;
+    * - the stream feature.
+    *
+    * TODO: analyse how the streaming feature is managed in the frontend.
+    * TODO: analyse how the streaming server works (or more likely, reengineer it).
+    * TODO: rewrite component based on new streaming server
+    */
     var importExportToolbar = new L.Control.CustomToolbar({
         position: 'bottomleft',
         buttons: [
@@ -948,6 +1150,13 @@
     });
     map.addControl(importExportToolbar);
 
+    /*
+    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+    *
+    * This component lets the user jump to a specific grid reference on the map.
+    *
+    * The UI is based on: app/html/gridJumpModal.html
+    */
     var gridToolbar = new L.Control.CustomToolbar({
         position: 'topleft',
         buttons: [
@@ -995,6 +1204,11 @@
     });
     map.addControl(gridToolbar);
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * When a new vector or marker is created, add the relevant layer to the map.
+    */
     map.on('draw:created', function(e) {
         drawnItems.addLayer(e.layer);
         if (e.layerType === 'polyline') {
@@ -1005,12 +1219,22 @@
         checkButtonsDisabled();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * When a new vector or marker is deleted, remove the relevant layer from the map.
+    */
     map.on('draw:deleted', function(e) {
         deleteAssociatedLayers(e.layers);
         publishMapState();
         checkButtonsDisabled();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * When a new vector or marker is changed, apply changes on the map.
+    */
     map.on('draw:edited', function(e) {
         deleteAssociatedLayers(e.layers);
         e.layers.eachLayer(function(layer) {
@@ -1024,28 +1248,55 @@
         publishMapState();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage editing.
+    */
     map.on('draw:editstart', function() {
         state.changing = true;
         hideChildLayers();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage editing.
+    */
     map.on('draw:editstop', function() {
         state.changing = false;
         showChildLayers();
         checkButtonsDisabled();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage deleting.
+    */
     map.on('draw:deletestart', function() {
         state.changing = true;
         hideChildLayers();
     });
 
+    /*
+    * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
+    *
+    * Safely manage deleting.
+    */
     map.on('draw:deletestop', function() {
         state.changing = false;
         showChildLayers();
         checkButtonsDisabled();
     });
 
+    /*
+    * Manage the il2:streamerror DOM event
+    *
+    * NOTE: this may be responsible for the page not loading.
+    * TODO: check what generates the event.
+    * TODO: refatctor as function, so it can easily be removed and added again later
+    */
     window.addEventListener('il2:streamerror', function (e) {
         if (!state.connected) {
             return;
@@ -1053,6 +1304,13 @@
         util.addClass(document.querySelector('a.fa-share-alt'), 'stream-error');
     });
 
+    /*
+    * Manage the il2:streamupdate DOM event
+    *
+    * NOTE: this may be responsible for the page not loading.
+    * TODO: check what generates the event.
+    * TODO: refatctor as function, so it can easily be removed and added again later
+    */
     window.addEventListener('il2:streamupdate', function (e) {
         if (!state.connected) {
             return;
