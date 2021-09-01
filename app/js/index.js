@@ -618,6 +618,9 @@
         }
     }
 
+    /**
+     * If the user is streaming his map, publish the current state, so that anyone who subscribed to it can see it.
+     */
     function publishMapState() {
         if (state.streaming) {
             var saveData = exportMapState();
@@ -626,11 +629,21 @@
         }
     }
 
+    /**
+     * Remove some controls to start working in connected mode.
+     *
+     * TODO: check why this is required.
+     */
     function startConnectedMode() {
         map.removeControl(drawControl);
         map.removeControl(clearButton);
     }
 
+    /**
+     * Add some controls to stop working in connected mode.
+     *
+     * TODO: check why this is required.
+     */
     function endConnectedMode() {
         map.removeControl(gridToolbar);
         map.removeControl(importExportToolbar);
@@ -641,6 +654,12 @@
         checkButtonsDisabled();
     }
 
+    /**
+     * Set up a certain checkbox and element, so that if the checkbox is unchecked the element is hidden, and if the
+     * checkbox is checked, the element is visible.
+     * @param checkboxId
+     * @param elementId
+     */
     function setupCheckboxTogglableElement(checkboxId, elementId) {
         var checkbox = document.getElementById(checkboxId);
         var element = document.getElementById(elementId);
