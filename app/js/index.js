@@ -53,8 +53,7 @@
         streaming: false,
         connected: false,
         changing: false,
-        streamInfo: {},
-        streamingAvailable: webdis.init() // TODO: check if this can be safely removed, this call hangs when the API is down and it should be asyncrhronous
+        streamInfo: {}
     };
 
     // Patch a leaflet bug, see https://github.com/bbecquet/Leaflet.PolylineDecorator/issues/17
