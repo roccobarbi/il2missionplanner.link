@@ -117,8 +117,7 @@ module.exports = (function() {
             defaultZoom: 3,
             minZoom: 2,
             maxZoom: 6,
-            tileUrl: 'https://tiles.il2missionplanner.com/stalingrad/{z}/{x}/{y}.png'
-            //tileUrl: 'file:///Users/fkc930/Development/personal/tiles.il2missionplanner.com/dist/stalingrad/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/stalingrad/{z}/{x}/{y}.png'
         },
         moscow: {
             fullName: 'Moscow',
@@ -136,8 +135,7 @@ module.exports = (function() {
             defaultZoom: 3,
             minZoom: 2,
             maxZoom: 6,
-            tileUrl: 'https://tiles.il2missionplanner.com/moscow/{z}/{x}/{y}.png'
-            //tileUrl: 'file:///Users/fkc930/Development/personal/tiles.il2missionplanner.com/dist/moscow/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/moscow/{z}/{x}/{y}.png'
         },
         luki: {
             fullName: 'Velikie Luki',
@@ -155,8 +153,7 @@ module.exports = (function() {
             defaultZoom: 3,
             minZoom: 2,
             maxZoom: 6,
-            tileUrl: 'https://tiles.il2missionplanner.com/luki/{z}/{x}/{y}.png'
-            //tileUrl: 'file:///Users/fkc930/Development/personal/tiles.il2missionplanner.com/dist/luki/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/luki/{z}/{x}/{y}.png'
         },
         kuban: {
             fullName: 'Kuban',
@@ -174,8 +171,7 @@ module.exports = (function() {
             defaultZoom: 4,
             minZoom: 2,
             maxZoom: 7,
-            tileUrl: 'https://tiles.il2missionplanner.com/kuban/{z}/{x}/{y}.png'
-            //tileUrl: 'http://localhost:5001/kuban/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/kuban/{z}/{x}/{y}.png'
         },
         rheinland: {
             fullName: 'Rheinland',
@@ -193,8 +189,7 @@ module.exports = (function() {
             defaultZoom: 4,
             minZoom: 2,
             maxZoom: 7,
-            tileUrl: 'https://tiles.il2missionplanner.com/rheinland/{z}/{x}/{y}.png'
-            //tileUrl: 'http://localhost:5001/rheinland/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/rheinland/{z}/{x}/{y}.png'
         },
         arras: {
             fullName: 'Arras',
@@ -212,8 +207,7 @@ module.exports = (function() {
             defaultZoom: 3,
             minZoom: 3,
             maxZoom: 5,
-            tileUrl: 'https://tiles.il2missionplanner.com/arras/{z}/{x}/{y}.png'
-            //tileUrl: 'http://localhost:5001/arras/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/arras/{z}/{x}/{y}.png'
         },
         prokhorovka: {
             fullName: 'Prokhorovka',
@@ -231,8 +225,7 @@ module.exports = (function() {
             defaultZoom: 4,
             minZoom: 3,
             maxZoom: 6,
-            tileUrl: 'https://tiles.il2missionplanner.com/prokhorovka/{z}/{x}/{y}.png'
-            //tileUrl: 'http://localhost:5001/prokhorovka/{z}/{x}/{y}.png'
+            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/prokhorovka/{z}/{x}/{y}.png'
         }
     };
 
