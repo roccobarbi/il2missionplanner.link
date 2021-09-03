@@ -43,8 +43,9 @@ module.exports = (function() {
         },
 
         /**
-         * hmget makes the initial call to the API that checks their status.
-         * TODO: verify where and how this is used, as it appears to be blockign the page when the API is down
+         * hmget made the initial call to the API that checks their status.
+         * The call has been disabled.
+         * I'm keeping the function definition as a placeholder for future functionality.
          *
          * @param key
          * @param fields
