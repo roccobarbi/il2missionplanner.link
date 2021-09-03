@@ -711,16 +711,26 @@
     * These maps are accessible via a fragment identifier in the url.
     * */
     if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
-        var responseBody = null;
-        var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);
-        var xhr = util.buildGetXhr(url, function() {
-            if (xhr.readyState === 4) {
-                responseBody = JSON.parse(xhr.responseText);
-                importMapState(responseBody.data);
-                fitViewToMission();
-                checkButtonsDisabled();
-            }
-        });
+        let responseBody = null;
+        /*var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);*/
+        let url = '';
+        switch (window.location.hash) {
+            case '#virtualpilots':
+                url = 'stats.virtualpilots.fi:8000/static/output.json';
+                break;
+            default:
+                url = '';
+        }
+        if (url !== '') {
+            let xhr = util.buildGetXhr(url, function () { // TODO: get the file in a better way
+                if (xhr.readyState === 4) {
+                    responseBody = JSON.parse(xhr.responseText);
+                    importMapState(responseBody.data);
+                    fitViewToMission();
+                    checkButtonsDisabled();
+                }
+            });
+        }
     }
 
     /*
