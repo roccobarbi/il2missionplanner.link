@@ -672,9 +672,44 @@
         });
     }
 
+    /**
+     * Set up the event listeners that manage events relative to map streaming.
+     * If the page is not connected to a streaming server, the callbacks return without doing nothing, so that they
+     * don't break any other functionality.
+     */
+    function setupStreamingEventListeners() {
+        /*
+        * Manage the il2:streamerror DOM event
+        */
+        window.addEventListener('il2:streamerror', function (e) {
+            if (!state.connected) {
+                return;
+            }
+            util.addClass(document.querySelector('a.fa-share-alt'), 'stream-error');
+        });
 
-    // if hash is not in map list, try to get json for that server
-    // TODO: check if this API call is really necessary for a MVP
+        /*
+        * Manage the il2:streamupdate DOM event
+        */
+        window.addEventListener('il2:streamupdate', function (e) {
+            if (!state.connected) {
+                return;
+            }
+            var saveData = e.detail;
+            if (saveData !== 1) {
+                clearMap();
+                importMapState(JSON.parse(saveData));
+            }
+            util.removeClass(document.querySelector('a.fa-share-alt'), 'stream-error');
+            checkButtonsDisabled();
+        });
+    }
+
+
+    /*
+    * This functionality allows external servers to store and embed maps.
+    * These maps are accessible via a fragment identifier in the url.
+    * */
     if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
         var responseBody = null;
         var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);
@@ -1290,38 +1325,10 @@
     });
 
     /*
-    * Manage the il2:streamerror DOM event
-    *
-    * NOTE: this may be responsible for the page not loading.
-    * TODO: check what generates the event.
-    * TODO: refatctor as function, so it can easily be removed and added again later
-    */
-    window.addEventListener('il2:streamerror', function (e) {
-        if (!state.connected) {
-            return;
-        }
-        util.addClass(document.querySelector('a.fa-share-alt'), 'stream-error');
-    });
-
-    /*
-    * Manage the il2:streamupdate DOM event
-    *
-    * NOTE: this may be responsible for the page not loading.
-    * TODO: check what generates the event.
-    * TODO: refatctor as function, so it can easily be removed and added again later
-    */
-    window.addEventListener('il2:streamupdate', function (e) {
-        if (!state.connected) {
-            return;
-        }
-        var saveData = e.detail;
-        if (saveData !== 1) {
-            clearMap();
-            importMapState(JSON.parse(saveData));
-        }
-        util.removeClass(document.querySelector('a.fa-share-alt'), 'stream-error');
-        checkButtonsDisabled();
-    });
+    * This function ensures that the event listeners required to properly manage map streaming are set up correctly.
+    * If the app is not connected to a remote streaming server, the listener callbacks without doing nothing.
+    * */
+    setupStreamingEventListeners();
 
     checkButtonsDisabled();
 
