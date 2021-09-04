@@ -14,6 +14,7 @@
   },
   "homepage": "https://github.com/gavincabbage/il2missionplanner.com#readme",
   "devDependencies": {
+    "serve": "^12.0.0",
     "bower": "^1.8.0",
     "brfs": "^1.4.3",
     "browserify": "^13.0.0",
@@ -26,7 +27,11 @@
     "mocha": "^2.4.5",
     "uglify-js": "^2.6.2",
     "watch-run": "^1.2.4",
-    "xhr-mock": "^1.6.0"
+    "xhr-mock": "^1.6.0",
+    "leaflet": "^1.7.1",
+    "js-skeleton": "^3.6.3",
+    "leaflet-draw": "^1.0.4",
+    "leaflet-textpath": "^1.2.3"
   },
   "scripts": {
     "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha app/js/**/*.test.js",
