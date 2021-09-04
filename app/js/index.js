@@ -716,7 +716,7 @@
         let url = '';
         switch (window.location.hash) {
             case '#virtualpilots':
-                url = 'stats.virtualpilots.fi:8000/static/output.json';
+                url = 'https://hw4bdhqxg9.execute-api.eu-south-1.amazonaws.com/getStoredMap?map=virtualpilots';
                 break;
             default:
                 url = '';
@@ -725,7 +725,7 @@
             let xhr = util.buildGetXhr(url, function () { // TODO: get the file in a better way
                 if (xhr.readyState === 4) {
                     responseBody = JSON.parse(xhr.responseText);
-                    importMapState(responseBody.data);
+                    importMapState(responseBody);
                     fitViewToMission();
                     checkButtonsDisabled();
                 }
