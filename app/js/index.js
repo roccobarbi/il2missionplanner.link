@@ -214,7 +214,7 @@
             marker.addTo(map);
         }
         var endMarker = L.circleMarker(coords[coords.length-1], { // TODO: good candidate to extract a function
-            clickable: false,
+            interactive: false,
             radius: 3,
             color: RED,
             fillColor: RED,
@@ -317,7 +317,7 @@
         nameMarker.on('click', targetClickHandlerFactory(target));
         nameMarker.addTo(map);
         if (target.notes !== '') {
-            target.bindLabel(target.notes, {
+            target.bindTooltip(target.notes, {
                 direction: 'left'
             }).addTo(map);
         }
