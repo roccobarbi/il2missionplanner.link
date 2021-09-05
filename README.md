@@ -16,6 +16,10 @@ This is a free and open source project, I appreciate any help anyone is willing 
 
 Before you jump into the code, I kindly ask you to read the following sections.
 
+### Funding
+
+You can keep this project running by donating through my patreon page: https://www.patreon.com/roccobarbi
+
 ### Other il2missionplanner.link repositories
 
 There are a few other il2missionplanner.link repositories that you can check:
