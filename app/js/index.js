@@ -763,8 +763,7 @@
         minZoom: mapConfig.minZoom,
         maxZoom: mapConfig.maxZoom,
         noWrap: true,
-        tms: true,
-        continuousWorld: true
+        tms: true
     }).addTo(map);
 
     /*
