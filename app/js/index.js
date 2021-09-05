@@ -56,10 +56,6 @@
         streamInfo: {}
     };
 
-    // Patch a leaflet bug, see https://github.com/bbecquet/Leaflet.PolylineDecorator/issues/17
-    // TODO: check if this is still required on newer versions of leaflet
-    L.PolylineDecorator.include(L.Mixin.Events);
-
     // Patch leaflet content with custom language
     L.drawLocal = content.augmentedLeafletDrawLocal;
 
