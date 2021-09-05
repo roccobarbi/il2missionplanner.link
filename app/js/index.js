@@ -520,7 +520,7 @@
      * @param selectedMapConfig
      */
     function selectMap(selectedMapConfig) {
-        var newIndex = selectedMapConfig.selectIndex;
+        let newIndex = selectedMapConfig.selectIndex;
         if (newIndex !== selectedMapIndex) {
             selectedMapIndex = selectedMapConfig.selectIndex;
             window.location.hash = selectedMapConfig.hash;
@@ -532,8 +532,7 @@
                 minZoom: selectedMapConfig.minZoom,
                 maxZoom: selectedMapConfig.maxZoom,
                 noWrap: true,
-                tms: true,
-                continuousWorld: true
+                tms: true
             }).addTo(map);
             map.setMaxBounds(calc.maxBounds(selectedMapConfig));
             map.setView(calc.center(selectedMapConfig), selectedMapConfig.defaultZoom);
@@ -567,6 +566,9 @@
 
     /**
      * Given an object with a map's state (saved using the function exportMapState), import it and show it.
+     *
+     * This function is also used to embed maps for stats servers (retrieving the json with the saved map state from the
+     * stat server itself).
      *
      * @param saveData
      */
