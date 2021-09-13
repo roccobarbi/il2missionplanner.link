@@ -115,7 +115,7 @@ module.exports = (function() {
             lngGridMax: 37,
             gridHopZoom: 5,
             defaultZoom: 3,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 6,
             tileUrl: 'https://tiles.il2missionplanner.link/stalingrad/{z}/{x}/{y}.png'
         },
@@ -133,7 +133,7 @@ module.exports = (function() {
             lngGridMax: 29,
             gridHopZoom: 5,
             defaultZoom: 3,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 5,
             tileUrl: 'https://tiles.il2missionplanner.link/moscow/{z}/{x}/{y}.png'
         },
@@ -151,7 +151,7 @@ module.exports = (function() {
             lngGridMax: 17.6,
             gridHopZoom: 4,
             defaultZoom: 3,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 5,
             tileUrl: 'https://tiles.il2missionplanner.link/luki/{z}/{x}/{y}.png'
         },
@@ -169,7 +169,7 @@ module.exports = (function() {
             lngGridMax: 42.5,
             gridHopZoom: 6,
             defaultZoom: 3,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 6,
             tileUrl: 'https://tiles.il2missionplanner.link/kuban/{z}/{x}/{y}.png'
         },
@@ -187,7 +187,7 @@ module.exports = (function() {
             lngGridMax: 40.1306,
             gridHopZoom: 6,
             defaultZoom: 4,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 6,
             tileUrl: 'https://tiles.il2missionplanner.link/rheinland/{z}/{x}/{y}.png'
         },
@@ -205,7 +205,7 @@ module.exports = (function() {
             lngGridMax: 11.7973,
             gridHopZoom: 5,
             defaultZoom: 3,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 4,
             tileUrl: 'https://tiles.il2missionplanner.link/arras/{z}/{x}/{y}.png'
         },
@@ -223,7 +223,7 @@ module.exports = (function() {
             lngGridMax: 10.6484,
             gridHopZoom: 5,
             defaultZoom: 4,
-            minZoom: 3,
+            minZoom: 0,
             maxZoom: 6,
             tileUrl: 'https://tiles.il2missionplanner.link/prokhorovka/{z}/{x}/{y}.png'
         }
