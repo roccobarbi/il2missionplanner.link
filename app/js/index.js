@@ -582,19 +582,23 @@
         /*
         * TODO: improve and remove breakage
         * frontline: [
-        *   [
-        *       [],[]
-        *   ]
+        *   [[],[]],
+        *   [[],[]]
         * ]*/
         let invertFrontlineLat = function(frontline){
-            let invertedFrontLine = [[[], []]];
-            for (let i = 0; i < 2; i++) { // for each frontline
-                for (let j = 0; j < frontline[0][i].length; i++){
-                    invertedFrontLine[0][i].push([mapConfig.latMax - frontline[0][i][j][0], frontline[0][i][j][1]]);
+            let invertedFrontLine = [];
+            for (let count_frontlines = 0; count_frontlines < frontline.length; count_frontlines++) { // for each frontline
+                invertedFrontLine.push([]);
+                for (let blue_or_red = 0; blue_or_red < 2; blue_or_red++){
+                    invertedFrontLine[count_frontlines].push([]);
+                    for (let count_front_segments = 0; count_front_segments < frontline[count_frontlines][blue_or_red].length; count_front_segments++) {
+                        invertedFrontLine[count_frontlines][blue_or_red].push([
+                            mapConfig.latMax - frontline[count_frontlines][blue_or_red][count_front_segments][0],
+                            frontline[count_frontlines][blue_or_red][count_front_segments][1]]);
+                    }
                 }
             }
             return invertedFrontLine;
-
         };
         if (saveData.routes) {
             for (let i = 0; i < saveData.routes.length; i++) {
@@ -625,16 +629,11 @@
                 applyTargetInfoCallback(newPoint);
             }
         }
-        /*
-        * TODO: analyse and improve
-        *
-        * This is almost certainly wrong and it only applies to a special case where only one frontline is present.
-        * */
         if (saveData.frontline) {
             let invertedFrontLine = invertFrontlineLat(saveData.frontline);
-            for (let frontNdx = 0; frontNdx < saveData.frontline[0].length; frontNdx++) { // for each frontline
-                let blueFront = invertedFrontLine[0][frontNdx][0];
-                let redFront = invertedFrontLine[1][frontNdx][1];
+            for (let frontNdx = 0; frontNdx < saveData.frontline.length; frontNdx++) { // for each frontline
+                let blueFront = invertedFrontLine[frontNdx][0];
+                let redFront = invertedFrontLine[frontNdx][1];
                 L.polyline(blueFront, {color: BLUE_FRONT, opacity: 1}).addTo(frontline);
                 L.polyline(redFront, {color: RED_FRONT, opacity: 1}).addTo(frontline);
             }
