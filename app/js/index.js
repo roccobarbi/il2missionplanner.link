@@ -851,7 +851,9 @@
     * L.Control.CustomToolbar is defined in control.js
     * L.Control.Draw is an external library
     *
-    * TODO: understand what was the purpose for the pice of code I commented out (which was throwing an error)
+    * TODO: understand why this segment was throwing an error and fix it
+    *
+    * Looking at the UI, it is likely that this component was responsible for adding icons and flight legs to the map.
     */
     /*drawControl = new L.Control.Draw({
         draw: {
