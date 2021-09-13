@@ -1,8 +1,6 @@
 var assert = require('chai').assert;
 
 var util = require('./util.js');
-var xhrMock = require('xhr-mock');
-xhrMock.setup();
 
 describe('util', function() {
 
@@ -234,7 +232,5 @@ describe('util', function() {
             assert.isDefined(util.buildSyncGetXhr);
         });
     });
-
-    xhrMock.teardown();
 
 });

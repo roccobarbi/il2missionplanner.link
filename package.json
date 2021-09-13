@@ -1,37 +1,44 @@
 {
-  "name": "il2missionplanner.com",
-  "version": "1.0.0",
+  "name": "il2missionplanner.link",
+  "version": "1.0.1",
   "description": "Il-2 Mission Planner",
-  "main": "index.html",
+  "browser": "index.html",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gavincabbage/il2missionplanner.com.git"
+    "url": "git+https://github.com/roccobarbi/il2missionplanner.link"
   },
-  "author": "Gavin Cabbage <gavincabbage@gmail.com>",
+  "author": "Rocco Barbini <roccobarbi@gmail.com>",
+  "funding": [
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/roccobarbi"
+    }
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gavincabbage/il2missionplanner.com/issues"
+    "url": "https://github.com/roccobarbi/il2missionplanner.link/issues"
   },
-  "homepage": "https://github.com/gavincabbage/il2missionplanner.com#readme",
+  "homepage": "https://github.com/roccobarbi/il2missionplanner.link#readme",
   "devDependencies": {
-    "serve": "^12.0.0",
-    "bower": "^1.8.0",
-    "brfs": "^1.4.3",
-    "browserify": "^13.0.0",
-    "chai": "^3.5.0",
-    "clean-css": "^3.4.12",
-    "concurrently": "^3.4.0",
-    "istanbul": "^0.4.3",
-    "jshint": "^2.9.1",
-    "livereload": "^0.4.1",
-    "mocha": "^2.4.5",
-    "uglify-js": "^2.6.2",
-    "watch-run": "^1.2.4",
-    "xhr-mock": "^1.6.0",
-    "leaflet": "^1.7.1",
-    "js-skeleton": "^3.6.3",
-    "leaflet-draw": "^1.0.4",
-    "leaflet-textpath": "^1.2.3"
+    "bower": ">=1.8.12",
+    "brfs": ">=2.0.2",
+    "browserify": ">=17.0.0",
+    "chai": ">=4.3.4",
+    "clean-css": ">=5.1.5",
+    "clean-css-cli": ">=5.3.3",
+    "concurrently": ">=6.2.1",
+    "istanbul": ">=0.4.5",
+    "js-skeleton": ">=3.6.3",
+    "jshint": ">=2.13.1",
+    "leaflet": ">=1.7.1",
+    "leaflet-draw": ">=1.0.4",
+    "leaflet-textpath": ">=1.2.3",
+    "livereload": ">=0.9.3",
+    "mocha": ">=9.1.1",
+    "serve": ">=12.0.0",
+    "uglify-js": ">=3.14.1",
+    "watch-run": ">=1.2.5",
+    "xhr-mock": ">=2.5.1"
   },
   "scripts": {
     "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha app/js/**/*.test.js",
@@ -50,12 +57,13 @@
     "dist:js": "npm run lint && npm test && npm run browserify && npm run uglify",
     "dist:dev": "npm run copy && npm run dist:js:dev && npm run dist:css",
     "dist": "npm run copy && npm run dist:js && npm run dist:css",
+    "vendor:leaflet-textpath": "mkdir -p app/vendor/Leaflet.TextPath && cp node_modules/leaflet-textpath/leaflet.textpath.js app/vendor/Leaflet.TextPath/leaflet.textpath.js",
     "watch:css": "watch-run -p 'app/css/**/*.css' npm run dist:css",
     "watch:index": "watch-run -p 'app/index.html' npm run copy:html",
     "watch:js": "watch-run -p 'app/js/**/*.js' npm run dist:js:dev",
     "watch:html": "watch-run -p 'app/html/**/*.html' npm run dist:js:dev",
     "watch:img": "watch-run -p 'app/img/dist/*' npm run copy:img",
-    "develop": "npm run clean && npm run dist:dev && concurrently \"npm run watch:css\" \"npm run watch:index\" \"npm run watch:js\" \"npm run watch:html\" \"npm run watch:img\" \"npm run reload\" \"serve dist\"",
+    "develop": "npm run clean && npm run vendor:leaflet-textpath && npm run dist:dev && concurrently \"npm run watch:css\" \"npm run watch:index\" \"npm run watch:js\" \"npm run watch:html\" \"npm run watch:img\" \"npm run reload\" \"serve dist\"",
     "dist:css": "cleancss -o dist/index.css app/css/index.css",
     "nodist": "npm run lint && npm test",
     "reload": "livereload ./dist/"

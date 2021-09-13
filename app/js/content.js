@@ -108,16 +108,16 @@ module.exports = (function() {
             selectIndex: 0,
             scale: 1.40056,
             latMin: 0,
-            latMax: 164,
+            latMax: 10752,
             latGridMax: 23,
             lngMin: 0,
-            lngMax: 252,
+            lngMax: 16384,
             lngGridMax: 37,
             gridHopZoom: 5,
             defaultZoom: 3,
-            minZoom: 2,
+            minZoom: 0,
             maxZoom: 6,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/stalingrad/{z}/{x}/{y}.png'
+            tileUrl: 'https://tiles.il2missionplanner.link/stalingrad/{z}/{x}/{y}.png'
         },
         moscow: {
             fullName: 'Moscow',
@@ -126,16 +126,16 @@ module.exports = (function() {
             selectIndex: 1,
             scale: 1.46621,
             latMin: 0,
-            latMax: 192,
+            latMax: 8192,
             latGridMax: 29,
             lngMin: 0,
-            lngMax: 192,
+            lngMax: 8192,
             lngGridMax: 29,
             gridHopZoom: 5,
             defaultZoom: 3,
-            minZoom: 2,
-            maxZoom: 6,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/moscow/{z}/{x}/{y}.png'
+            minZoom: 0,
+            maxZoom: 5,
+            tileUrl: 'https://tiles.il2missionplanner.link/moscow/{z}/{x}/{y}.png'
         },
         luki: {
             fullName: 'Velikie Luki',
@@ -144,16 +144,16 @@ module.exports = (function() {
             selectIndex: 2,
             scale: 0.65306,
             latMin: 0,
-            latMax: 160,
+            latMax: 5120,
             latGridMax: 10.4,
             lngMin: 0,
-            lngMax: 254,
+            lngMax: 8192,
             lngGridMax: 17.6,
             gridHopZoom: 4,
             defaultZoom: 3,
-            minZoom: 2,
-            maxZoom: 6,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/luki/{z}/{x}/{y}.png'
+            minZoom: 0,
+            maxZoom: 5,
+            tileUrl: 'https://tiles.il2missionplanner.link/luki/{z}/{x}/{y}.png'
         },
         kuban: {
             fullName: 'Kuban',
@@ -162,16 +162,16 @@ module.exports = (function() {
             selectIndex: 3,
             scale: 2.876397232,
             latMin: 0,
-            latMax: 103,
+            latMax: 11343,
             latGridMax: 29.7,
             lngMin: 0,
-            lngMax: 148,
+            lngMax: 16384,
             lngGridMax: 42.5,
             gridHopZoom: 6,
-            defaultZoom: 4,
-            minZoom: 2,
-            maxZoom: 7,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/kuban/{z}/{x}/{y}.png'
+            defaultZoom: 3,
+            minZoom: 0,
+            maxZoom: 6,
+            tileUrl: 'https://tiles.il2missionplanner.link/kuban/{z}/{x}/{y}.png'
         },
         rheinland: {
             fullName: 'Rheinland',
@@ -180,16 +180,16 @@ module.exports = (function() {
             selectIndex: 4,
             scale: 2.876397232,
             latMin: 0,
-            latMax: 113,
+            latMax: 13312,
             latGridMax: 32.4437,
             lngMin: 0,
-            lngMax: 140,
+            lngMax: 16384,
             lngGridMax: 40.1306,
             gridHopZoom: 6,
             defaultZoom: 4,
-            minZoom: 2,
-            maxZoom: 7,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/rheinland/{z}/{x}/{y}.png'
+            minZoom: 0,
+            maxZoom: 6,
+            tileUrl: 'https://tiles.il2missionplanner.link/rheinland/{z}/{x}/{y}.png'
         },
         arras: {
             fullName: 'Arras',
@@ -198,16 +198,16 @@ module.exports = (function() {
             selectIndex: 5,
             scale: 0.7191,
             latMin: 0,
-            latMax: 165,
+            latMax: 4096,
             latGridMax: 11.7973,
             lngMin: 0,
-            lngMax: 165,
+            lngMax: 4096,
             lngGridMax: 11.7973,
-            gridHopZoom: 5,
+            gridHopZoom: 4,
             defaultZoom: 3,
-            minZoom: 3,
-            maxZoom: 5,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/arras/{z}/{x}/{y}.png'
+            minZoom: 0,
+            maxZoom: 4,
+            tileUrl: 'https://tiles.il2missionplanner.link/arras/{z}/{x}/{y}.png'
         },
         prokhorovka: {
             fullName: 'Prokhorovka',
@@ -223,9 +223,9 @@ module.exports = (function() {
             lngGridMax: 10.6484,
             gridHopZoom: 5,
             defaultZoom: 4,
-            minZoom: 3,
+            minZoom: 0,
             maxZoom: 6,
-            tileUrl: 'https://d1w6xpzk1h0aj5.cloudfront.net/prokhorovka/{z}/{x}/{y}.png'
+            tileUrl: 'https://tiles.il2missionplanner.link/prokhorovka/{z}/{x}/{y}.png'
         }
     };
 
