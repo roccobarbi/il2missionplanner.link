@@ -1063,7 +1063,7 @@
                     }
                 }
             },
-            {
+            /*{
                 id: 'stream-button',
                 icon: 'fa-share-alt',
                 tooltip: content.streamTooltip,
@@ -1248,7 +1248,7 @@
                         });
                     }
                 }
-            }
+            }*/
         ]
     });
     map.addControl(importExportToolbar);
