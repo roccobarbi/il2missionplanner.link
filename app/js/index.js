@@ -580,7 +580,8 @@
         mapConfig = importedMapConfig;
         selectedMapIndex = mapConfig.selectIndex;
         /*
-        * TODO: improve and remove breakage
+        * Invert the latitude of each point in the frontline, so that it can be displayed correctly.
+        *
         * frontline: [
         *   [[],[]],
         *   [[],[]]
@@ -778,7 +779,7 @@
         let zoomCoefficient = Math.pow(2, mapConfig.maxZoom - mapConfig.minZoom);
         L.CRS.MySimple = L.extend({}, L.CRS.Simple, {
             //                      coefficients: a      b    c     d
-            transformation: new L.Transformation(1 / zoomCoefficient, 0, 1 / zoomCoefficient, 0) // Compute a and c coefficients so that  tile 0/0/0 is from [0, 0] to [img]
+            transformation: new L.Transformation(1 / zoomCoefficient, 0, 1 / zoomCoefficient, 0) // Compute a and c coefficients so that tile 0/0/0 is from [0, 0] to [img]
         });
 
         /*
