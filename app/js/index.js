@@ -917,397 +917,412 @@
     });
     map.addControl(clearButton);
 
-    /*
-    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
-    *
-    * This specific toolbar component manages the map settings (e.g. which map has been selected) and the help.
-    * Its UI is based on app/html/settingsModal.html and app/html/helpModal.html
-    */
-    var helpSettingsToolbar = new L.Control.CustomToolbar({
-        position: 'bottomright',
-        buttons: [
-            {
-                id: 'settings-button',
-                icon: 'fa-gear',
-                tooltip: content.settingsTooltip,
-                clickFn: function() {
-                    map.openModal({
-                        template: content.settingsModalTemplate,
-                        onShow: function(e) {
-                            var mapSelect = document.getElementById('map-select');
-                            mapSelect.selectedIndex = selectedMapIndex;
-                            var originalIndex = selectedMapIndex;
-                            var invertCheckbox = document.getElementById('invert-text-checkbox');
-                            invertCheckbox.checked = state.colorsInverted;
-                            var backgroundCheckbox = document.getElementById('text-background-checkbox');
-                            backgroundCheckbox.checked = state.showBackground;
-                            mapSelect.focus();
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
-                                if (mapSelect.selectedIndex !== originalIndex) {
-                                    var selectedMap = mapSelect.options[mapSelect.selectedIndex].value;
-                                    mapConfig = content.maps[selectedMap];
-                                    selectMap(mapConfig);
-                                    selectedMapIndex = mapSelect.selectedIndex;
-                                    publishMapState();
-                                }
-                                if (invertCheckbox.checked !== state.colorsInverted) {
-                                    state.colorsInverted = invertCheckbox.checked;
-                                    var textElements = document.getElementsByClassName('map-text');
-                                    for (var i = 0; i < textElements.length; i++) {
-                                        if (state.colorsInverted) {
-                                            textElements[i].classList.add('inverted');
-                                        } else {
-                                            textElements[i].classList.remove('inverted');
+    function setupHelpSettingsToolbar(map) {
+        /*
+        * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+        *
+        * This specific toolbar component manages the map settings (e.g. which map has been selected) and the help.
+        * Its UI is based on app/html/settingsModal.html and app/html/helpModal.html
+        */
+        var helpSettingsToolbar = new L.Control.CustomToolbar({
+            position: 'bottomright',
+            buttons: [
+                {
+                    id: 'settings-button',
+                    icon: 'fa-gear',
+                    tooltip: content.settingsTooltip,
+                    clickFn: function () {
+                        map.openModal({
+                            template: content.settingsModalTemplate,
+                            onShow: function (e) {
+                                var mapSelect = document.getElementById('map-select');
+                                mapSelect.selectedIndex = selectedMapIndex;
+                                var originalIndex = selectedMapIndex;
+                                var invertCheckbox = document.getElementById('invert-text-checkbox');
+                                invertCheckbox.checked = state.colorsInverted;
+                                var backgroundCheckbox = document.getElementById('text-background-checkbox');
+                                backgroundCheckbox.checked = state.showBackground;
+                                mapSelect.focus();
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
+                                    if (mapSelect.selectedIndex !== originalIndex) {
+                                        var selectedMap = mapSelect.options[mapSelect.selectedIndex].value;
+                                        mapConfig = content.maps[selectedMap];
+                                        selectMap(mapConfig);
+                                        selectedMapIndex = mapSelect.selectedIndex;
+                                        publishMapState();
+                                    }
+                                    if (invertCheckbox.checked !== state.colorsInverted) {
+                                        state.colorsInverted = invertCheckbox.checked;
+                                        var textElements = document.getElementsByClassName('map-text');
+                                        for (var i = 0; i < textElements.length; i++) {
+                                            if (state.colorsInverted) {
+                                                textElements[i].classList.add('inverted');
+                                            } else {
+                                                textElements[i].classList.remove('inverted');
+                                            }
                                         }
                                     }
-                                }
-                                if (backgroundCheckbox.checked !== state.showBackground) {
-                                    state.showBackground = backgroundCheckbox.checked;
-                                    var textElements = document.getElementsByClassName('map-text');
-                                    for (var i = 0; i < textElements.length; i++) {
-                                        if (state.showBackground) {
-                                            textElements[i].classList.remove('nobg');
-                                        } else {
-                                            textElements[i].classList.add('nobg');
+                                    if (backgroundCheckbox.checked !== state.showBackground) {
+                                        state.showBackground = backgroundCheckbox.checked;
+                                        var textElements = document.getElementsByClassName('map-text');
+                                        for (var i = 0; i < textElements.length; i++) {
+                                            if (state.showBackground) {
+                                                textElements[i].classList.remove('nobg');
+                                            } else {
+                                                textElements[i].classList.add('nobg');
+                                            }
                                         }
                                     }
-                                }
-                                e.modal.hide();
-                            });
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                e.modal.hide();
-                            });
-                        }
-                    });
+                                    e.modal.hide();
+                                });
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function () {
+                                    e.modal.hide();
+                                });
+                            }
+                        });
+                    }
+                },
+                {
+                    id: 'help-button',
+                    icon: 'fa-question',
+                    tooltip: content.helpTooltip,
+                    clickFn: function () {
+                        map.openModal({
+                            template: content.helpModalTemplate,
+                            onShow: function (e) {
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
+                                    e.modal.hide();
+                                });
+                            }
+                        });
+                    }
                 }
-            },
-            {
-                id: 'help-button',
-                icon: 'fa-question',
-                tooltip: content.helpTooltip,
-                clickFn: function() {
-                    map.openModal({
-                        template: content.helpModalTemplate,
-                        onShow: function(e) {
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
-                                e.modal.hide();
-                            });
-                        }
-                    });
-                }
-            }
-        ]
-    });
-    map.addControl(helpSettingsToolbar);
+            ]
+        });
+        map.addControl(helpSettingsToolbar);
+    }
 
-    /*
-    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
-    *
-    * This specific toolbar component manages:
-    * - the import and export features for maps;
-    * - the stream feature.
-    *
-    * TODO: analyse how the streaming feature is managed in the frontend.
-    * TODO: analyse how the streaming server works (or more likely, reengineer it).
-    * TODO: rewrite component based on new streaming server
-    */
-    var importExportToolbar = new L.Control.CustomToolbar({
-        position: 'bottomleft',
-        buttons: [
-            {
-                id: 'import-button',
-                icon: 'fa-upload',
-                tooltip: content.importTooltip,
-                clickFn: function() {
-                    map.openModal({
-                        template: content.importModalTemplate,
-                        onShow: function(e) {
-                            var importInput = document.getElementById('import-file');
-                            importInput.focus();
-                            var fileContent;
-                            L.DomEvent.on(importInput, 'change', function(evt) {
-                                var reader = new window.FileReader();
-                                reader.onload = function(evt) {
-                                    if(evt.target.readyState !== 2) {
-                                        return;
-                                    }
-                                    if(evt.target.error) {
-                                        window.alert('Error while reading file');
-                                        return;
-                                    }
-                                    fileContent = evt.target.result;
-                                };
-                                reader.readAsText(evt.target.files[0]);
-                            });
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
-                                var saveData = JSON.parse(fileContent);
-                                importMapState(saveData);
-                                e.modal.hide();
-                                fitViewToMission();
-                            });
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                e.modal.hide();
-                            });
-                        },
-                        onHide: function() {
-                            checkButtonsDisabled();
-                        }
-                    });
-                }
-            },
-            {
-                id: 'export-button',
-                icon: 'fa-download',
-                tooltip: content.exportTooltip,
-                clickFn: function() {
-                    if (!mapIsEmpty()) {
-                        util.download('plan.json', JSON.stringify(exportMapState()));
-                    }
-                }
-            },
-            /*{
-                id: 'stream-button',
-                icon: 'fa-share-alt',
-                tooltip: content.streamTooltip,
-                clickFn: function() {
-                    var template;
-                    if (!state.streaming && !state.connected) {
-                        template = content.streamModalTemplate;
-                        fireStreamModal();
-                    } else if (state.streaming && !state.connected) {
-                        template = content.alreadyStreamingModalTemplate;
-                        fireAlreadyStreamingModal();
-                    } else if (!state.streaming && state.connected) {
-                        template = content.alreadyConnectedModalTemplate;
-                        fireAlreadyConnectedModal();
-                    }
-                    function fireStreamModal() {
+    function setupImportExportToolbar(map) {
+        /*
+        * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+        *
+        * This specific toolbar component manages:
+        * - the import and export features for maps;
+        * - the stream feature.
+        *
+        * TODO: analyse how the streaming feature is managed in the frontend.
+        * TODO: analyse how the streaming server works (or more likely, reengineer it).
+        * TODO: rewrite component based on new streaming server
+        */
+        var importExportToolbar = new L.Control.CustomToolbar({
+            position: 'bottomleft',
+            buttons: [
+                {
+                    id: 'import-button',
+                    icon: 'fa-upload',
+                    tooltip: content.importTooltip,
+                    clickFn: function () {
                         map.openModal({
-                            template: template,
-                            onShow: function(e) {
-                                document.getElementById('stream-start-button').focus();
-                                L.DomEvent.on(document.getElementById('stream-start-button'), 'click', function() {
-                                    e.modal.hide();
-                                    fireStartModal();
-                                });
-                                L.DomEvent.on(document.getElementById('stream-connect-button'), 'click', function() {
-                                    e.modal.hide();
-                                    fireConnectModal();
-                                });
-                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                    e.modal.hide();
-                                });
-                            }
-                        });
-                    }
-                    function fireStartModal() {
-                        map.openModal({
-                            template: content.startStreamModalTemplate,
-                            onShow: function(e) {
-                                document.getElementById('stream-start-confirm-button').focus();
-                                L.DomEvent.on(document.getElementById('stream-start-confirm-button'), 'click', function() {
-                                    var streamName = document.getElementById('stream-name').value;
-                                    var streamPassword = document.getElementById('stream-password').value;
-                                    var streamCode = document.getElementById('stream-leader-code').value;
-                                    if (!streamName || !streamPassword || !streamCode) {
-                                        var errorElement = document.getElementById('start-stream-error');
-                                        errorElement.innerHTML = 'All fields are required. Try again.';
-                                        util.removeClass(errorElement, 'hidden-section');
-                                        return;
-                                    }
-                                    var mapState = window.escape(JSON.stringify(exportMapState()));
-                                    var response = webdis.startStream(streamName, streamPassword, streamCode, mapState);
-                                    if (response[0] !== 'SUCCESS')  {
-                                        var errorElement = document.getElementById('start-stream-error');
-                                        errorElement.innerHTML = response[1];
-                                        util.removeClass(errorElement, 'hidden-section');
-                                        return;
-                                    }
-                                    state.streaming = true;
-                                    util.addClass(document.querySelector('a.fa-share-alt'), 'streaming');
-                                    state.streamInfo = {
-                                        name: streamName,
-                                        password: streamPassword,
-                                        code: streamCode
+                            template: content.importModalTemplate,
+                            onShow: function (e) {
+                                var importInput = document.getElementById('import-file');
+                                importInput.focus();
+                                var fileContent;
+                                L.DomEvent.on(importInput, 'change', function (evt) {
+                                    var reader = new window.FileReader();
+                                    reader.onload = function (evt) {
+                                        if (evt.target.readyState !== 2) {
+                                            return;
+                                        }
+                                        if (evt.target.error) {
+                                            window.alert('Error while reading file');
+                                            return;
+                                        }
+                                        fileContent = evt.target.result;
                                     };
+                                    reader.readAsText(evt.target.files[0]);
+                                });
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
+                                    var saveData = JSON.parse(fileContent);
+                                    importMapState(saveData);
+                                    e.modal.hide();
+                                    fitViewToMission();
+                                });
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function () {
                                     e.modal.hide();
                                 });
-                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                    e.modal.hide();
-                                });
+                            },
+                            onHide: function () {
+                                checkButtonsDisabled();
                             }
                         });
                     }
-                    function fireConnectModal() {
-                        map.openModal({
-                            template: content.connectStreamModalTemplate,
-                            onShow: function(e) {
-                                var streamSelect = document.getElementById('stream-select');
-                                var streams = webdis.getStreamList();
-                                streamSelect.options.length = 0;
-                                for (var i=0; i < streams.length; i++) {
-                                    streamSelect.options[i] = new Option(streams[i].substring(7), streams[i].substring(7));
+                },
+                {
+                    id: 'export-button',
+                    icon: 'fa-download',
+                    tooltip: content.exportTooltip,
+                    clickFn: function () {
+                        if (!mapIsEmpty()) {
+                            util.download('plan.json', JSON.stringify(exportMapState()));
+                        }
+                    }
+                },
+                /*{
+                    id: 'stream-button',
+                    icon: 'fa-share-alt',
+                    tooltip: content.streamTooltip,
+                    clickFn: function() {
+                        var template;
+                        if (!state.streaming && !state.connected) {
+                            template = content.streamModalTemplate;
+                            fireStreamModal();
+                        } else if (state.streaming && !state.connected) {
+                            template = content.alreadyStreamingModalTemplate;
+                            fireAlreadyStreamingModal();
+                        } else if (!state.streaming && state.connected) {
+                            template = content.alreadyConnectedModalTemplate;
+                            fireAlreadyConnectedModal();
+                        }
+                        function fireStreamModal() {
+                            map.openModal({
+                                template: template,
+                                onShow: function(e) {
+                                    document.getElementById('stream-start-button').focus();
+                                    L.DomEvent.on(document.getElementById('stream-start-button'), 'click', function() {
+                                        e.modal.hide();
+                                        fireStartModal();
+                                    });
+                                    L.DomEvent.on(document.getElementById('stream-connect-button'), 'click', function() {
+                                        e.modal.hide();
+                                        fireConnectModal();
+                                    });
+                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                                        e.modal.hide();
+                                    });
                                 }
-                                setupCheckboxTogglableElement('leader-checkbox', 'leader-hidden');
-                                document.getElementById('stream-connect-button').focus();
-                                L.DomEvent.on(document.getElementById('stream-connect-button'), 'click', function() {
-                                    var selectedStream = streamSelect.options[streamSelect.selectedIndex].value;
-                                    var password = document.getElementById('stream-password').value;
-                                    var code, response;
-                                    var checkbox = document.getElementById('leader-checkbox');
-                                    if (checkbox.checked) {
-                                        if (V.fails('connect-form')) {
-                                            var errorElement = document.getElementById('connect-stream-error');
-                                            errorElement.innerHTML = 'Password and code are required to connect.';
+                            });
+                        }
+                        function fireStartModal() {
+                            map.openModal({
+                                template: content.startStreamModalTemplate,
+                                onShow: function(e) {
+                                    document.getElementById('stream-start-confirm-button').focus();
+                                    L.DomEvent.on(document.getElementById('stream-start-confirm-button'), 'click', function() {
+                                        var streamName = document.getElementById('stream-name').value;
+                                        var streamPassword = document.getElementById('stream-password').value;
+                                        var streamCode = document.getElementById('stream-leader-code').value;
+                                        if (!streamName || !streamPassword || !streamCode) {
+                                            var errorElement = document.getElementById('start-stream-error');
+                                            errorElement.innerHTML = 'All fields are required. Try again.';
                                             util.removeClass(errorElement, 'hidden-section');
                                             return;
                                         }
-                                        code = document.getElementById('stream-code').value;
-                                        response = webdis.getStreamReconnect(selectedStream, password, code);
-                                        if (response[0] !== 'SUCCESS') {
-                                            var errorElement = document.getElementById('connect-stream-error');
+                                        var mapState = window.escape(JSON.stringify(exportMapState()));
+                                        var response = webdis.startStream(streamName, streamPassword, streamCode, mapState);
+                                        if (response[0] !== 'SUCCESS')  {
+                                            var errorElement = document.getElementById('start-stream-error');
                                             errorElement.innerHTML = response[1];
                                             util.removeClass(errorElement, 'hidden-section');
                                             return;
                                         }
-                                        state.streamInfo.code = code;
-                                        clearMap();
-                                        importMapState(JSON.parse(response[2]));
                                         state.streaming = true;
                                         util.addClass(document.querySelector('a.fa-share-alt'), 'streaming');
-                                    } else {
-                                        if (V.fails('connect-form')) {
-                                            var errorElement = document.getElementById('connect-stream-error');
-                                            errorElement.innerHTML = 'Password is required to connect.';
-                                            util.removeClass(errorElement, 'hidden-section');
-                                            return;
-                                        }
-                                        response = webdis.getStreamInfo(selectedStream, password);
-                                        if (response[0] !== 'SUCCESS') {
-                                            var errorElement = document.getElementById('connect-stream-error');
-                                            errorElement.innerHTML = response[1];
-                                            util.removeClass(errorElement, 'hidden-section');
-                                            return;
-                                        }
-                                        webdis.subscribe(response[1]);
-                                        clearMap();
-                                        importMapState(JSON.parse(response[2]));
-                                        state.connected = response[1];
-                                        util.addClass(document.querySelector('a.fa-share-alt'), 'connected');
-                                        startConnectedMode();
-                                    }
-                                    state.streamInfo = {
-                                        name: selectedStream,
-                                        password: password,
-                                        code: code
-                                    };
-                                    checkButtonsDisabled();
-                                    e.modal.hide();
-                                });
-                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                    e.modal.hide();
-                                });
-                            }
-                        });
-                    }
-                    function fireAlreadyConnectedModal() {
-                        map.openModal({
-                            streamName: state.streamInfo.name,
-                            template: content.alreadyConnectedModalTemplate,
-                            onShow: function(e) {
-                                document.getElementById('disconnect-button').focus();
-                                L.DomEvent.on(document.getElementById('disconnect-button'), 'click', function() {
-                                    webdis.unsubscribe(state.connected);
-                                    state.connected = false;
-                                    util.removeClass(document.querySelector('a.fa-share-alt'), 'connected');
-                                    endConnectedMode();
-                                    e.modal.hide();
-                                });
-                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                    e.modal.hide();
-                                });
-                            }
-                        });
-                    }
-                    function fireAlreadyStreamingModal() {
-                        map.openModal({
-                            streamName: state.streamInfo.name,
-                            streamPassword: state.streamInfo.password,
-                            streamCode: state.streamInfo.code,
-                            template: content.alreadyStreamingModalTemplate,
-                            onShow: function(e) {
-                                document.getElementById('stop-streaming-button').focus();
-                                setupCheckboxTogglableElement('already-streaming-checkbox', 'already-streaming-hidden');
-                                L.DomEvent.on(document.getElementById('stop-streaming-button'), 'click', function() {
-                                    e.modal.hide();
-                                    state.streaming = false;
-                                    util.removeClass(document.querySelector('a.fa-share-alt'), 'streaming');
-                                });
-                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                    e.modal.hide();
-                                });
-                            }
-                        });
-                    }
-                }
-            }*/
-        ]
-    });
-    map.addControl(importExportToolbar);
-
-    /*
-    * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
-    *
-    * This component lets the user jump to a specific grid reference on the map.
-    *
-    * The UI is based on: app/html/gridJumpModal.html
-    */
-    var gridToolbar = new L.Control.CustomToolbar({
-        position: 'topleft',
-        buttons: [
-            {
-                id: 'gridhop-button',
-                icon: 'fa-th-large',
-                tooltip: content.gridHopTooltip,
-                clickFn: function() {
-                    map.openModal({
-                        template: content.gridJumpModalTemplate,
-                        onShow: function(e) {
-                            var gridElement = document.getElementById('grid-input');
-                            gridElement.focus();
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
-                                if (V.passes('grid-jump-form')) {
-                                    var grid = gridElement.value;
-                                    var viewLatLng = calc.gridLatLng(grid, mapConfig);
-                                    map.setView(viewLatLng, mapConfig.gridHopZoom);
-                                    e.modal.hide();
-                                } else {
-                                    var errorElement = document.getElementById('grid-jump-error');
-                                    errorElement.innerHTML = 'Please input a valid four digit grid number.';
-                                    util.removeClass(errorElement, 'hidden-section');
-                                    errorElement.focus();
+                                        state.streamInfo = {
+                                            name: streamName,
+                                            password: streamPassword,
+                                            code: streamCode
+                                        };
+                                        e.modal.hide();
+                                    });
+                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                                        e.modal.hide();
+                                    });
                                 }
                             });
-                            L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                e.modal.hide();
+                        }
+                        function fireConnectModal() {
+                            map.openModal({
+                                template: content.connectStreamModalTemplate,
+                                onShow: function(e) {
+                                    var streamSelect = document.getElementById('stream-select');
+                                    var streams = webdis.getStreamList();
+                                    streamSelect.options.length = 0;
+                                    for (var i=0; i < streams.length; i++) {
+                                        streamSelect.options[i] = new Option(streams[i].substring(7), streams[i].substring(7));
+                                    }
+                                    setupCheckboxTogglableElement('leader-checkbox', 'leader-hidden');
+                                    document.getElementById('stream-connect-button').focus();
+                                    L.DomEvent.on(document.getElementById('stream-connect-button'), 'click', function() {
+                                        var selectedStream = streamSelect.options[streamSelect.selectedIndex].value;
+                                        var password = document.getElementById('stream-password').value;
+                                        var code, response;
+                                        var checkbox = document.getElementById('leader-checkbox');
+                                        if (checkbox.checked) {
+                                            if (V.fails('connect-form')) {
+                                                var errorElement = document.getElementById('connect-stream-error');
+                                                errorElement.innerHTML = 'Password and code are required to connect.';
+                                                util.removeClass(errorElement, 'hidden-section');
+                                                return;
+                                            }
+                                            code = document.getElementById('stream-code').value;
+                                            response = webdis.getStreamReconnect(selectedStream, password, code);
+                                            if (response[0] !== 'SUCCESS') {
+                                                var errorElement = document.getElementById('connect-stream-error');
+                                                errorElement.innerHTML = response[1];
+                                                util.removeClass(errorElement, 'hidden-section');
+                                                return;
+                                            }
+                                            state.streamInfo.code = code;
+                                            clearMap();
+                                            importMapState(JSON.parse(response[2]));
+                                            state.streaming = true;
+                                            util.addClass(document.querySelector('a.fa-share-alt'), 'streaming');
+                                        } else {
+                                            if (V.fails('connect-form')) {
+                                                var errorElement = document.getElementById('connect-stream-error');
+                                                errorElement.innerHTML = 'Password is required to connect.';
+                                                util.removeClass(errorElement, 'hidden-section');
+                                                return;
+                                            }
+                                            response = webdis.getStreamInfo(selectedStream, password);
+                                            if (response[0] !== 'SUCCESS') {
+                                                var errorElement = document.getElementById('connect-stream-error');
+                                                errorElement.innerHTML = response[1];
+                                                util.removeClass(errorElement, 'hidden-section');
+                                                return;
+                                            }
+                                            webdis.subscribe(response[1]);
+                                            clearMap();
+                                            importMapState(JSON.parse(response[2]));
+                                            state.connected = response[1];
+                                            util.addClass(document.querySelector('a.fa-share-alt'), 'connected');
+                                            startConnectedMode();
+                                        }
+                                        state.streamInfo = {
+                                            name: selectedStream,
+                                            password: password,
+                                            code: code
+                                        };
+                                        checkButtonsDisabled();
+                                        e.modal.hide();
+                                    });
+                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                                        e.modal.hide();
+                                    });
+                                }
                             });
                         }
-                    });
-                }
-            },
-            {
-                id: 'missionhop-button',
-                icon: 'fa-crop',
-                tooltip: content.missionHopTooltip,
-                clickFn: function() {
-                    if (!mapIsEmpty()) {
-                        fitViewToMission();
+                        function fireAlreadyConnectedModal() {
+                            map.openModal({
+                                streamName: state.streamInfo.name,
+                                template: content.alreadyConnectedModalTemplate,
+                                onShow: function(e) {
+                                    document.getElementById('disconnect-button').focus();
+                                    L.DomEvent.on(document.getElementById('disconnect-button'), 'click', function() {
+                                        webdis.unsubscribe(state.connected);
+                                        state.connected = false;
+                                        util.removeClass(document.querySelector('a.fa-share-alt'), 'connected');
+                                        endConnectedMode();
+                                        e.modal.hide();
+                                    });
+                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                                        e.modal.hide();
+                                    });
+                                }
+                            });
+                        }
+                        function fireAlreadyStreamingModal() {
+                            map.openModal({
+                                streamName: state.streamInfo.name,
+                                streamPassword: state.streamInfo.password,
+                                streamCode: state.streamInfo.code,
+                                template: content.alreadyStreamingModalTemplate,
+                                onShow: function(e) {
+                                    document.getElementById('stop-streaming-button').focus();
+                                    setupCheckboxTogglableElement('already-streaming-checkbox', 'already-streaming-hidden');
+                                    L.DomEvent.on(document.getElementById('stop-streaming-button'), 'click', function() {
+                                        e.modal.hide();
+                                        state.streaming = false;
+                                        util.removeClass(document.querySelector('a.fa-share-alt'), 'streaming');
+                                    });
+                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                                        e.modal.hide();
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }*/
+            ]
+        });
+        map.addControl(importExportToolbar);
+        return importExportToolbar;
+    }
+
+    function setUpGridToolbar(map) {
+        /*
+        * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
+        *
+        * This component lets the user jump to a specific grid reference on the map.
+        *
+        * The UI is based on: app/html/gridJumpModal.html
+        */
+        var gridToolbar = new L.Control.CustomToolbar({
+            position: 'topleft',
+            buttons: [
+                {
+                    id: 'gridhop-button',
+                    icon: 'fa-th-large',
+                    tooltip: content.gridHopTooltip,
+                    clickFn: function () {
+                        map.openModal({
+                            template: content.gridJumpModalTemplate,
+                            onShow: function (e) {
+                                var gridElement = document.getElementById('grid-input');
+                                gridElement.focus();
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
+                                    if (V.passes('grid-jump-form')) {
+                                        var grid = gridElement.value;
+                                        var viewLatLng = calc.gridLatLng(grid, mapConfig);
+                                        map.setView(viewLatLng, mapConfig.gridHopZoom);
+                                        e.modal.hide();
+                                    } else {
+                                        var errorElement = document.getElementById('grid-jump-error');
+                                        errorElement.innerHTML = 'Please input a valid four digit grid number.';
+                                        util.removeClass(errorElement, 'hidden-section');
+                                        errorElement.focus();
+                                    }
+                                });
+                                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function () {
+                                    e.modal.hide();
+                                });
+                            }
+                        });
+                    }
+                },
+                {
+                    id: 'missionhop-button',
+                    icon: 'fa-crop',
+                    tooltip: content.missionHopTooltip,
+                    clickFn: function () {
+                        if (!mapIsEmpty()) {
+                            fitViewToMission();
+                        }
                     }
                 }
-            }
-        ]
-    });
-    map.addControl(gridToolbar);
+            ]
+        });
+        map.addControl(gridToolbar);
+        return gridToolbar;
+    }
+
+    /*
+    * Set up the toolbars.
+    * */
+    setupHelpSettingsToolbar(map);
+    let importExportToolbar = setupImportExportToolbar(map);
+    let gridToolbar = setUpGridToolbar(map);
 
     /*
     * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
