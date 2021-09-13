@@ -790,10 +790,6 @@
         map = L.map('map', {
             crs: L.CRS.MySimple,
             attributionControl: false
-            //maxBounds: [0, 0, mapConfig.latMax, mapConfig.lngMax],
-            //minZoom: mapConfig.minZoom,
-            //maxZoom: mapConfig.maxZoom,
-            //bounds: [0, 0, mapConfig.latMax, mapConfig.lngMax]
         });
 
         /*
@@ -809,7 +805,6 @@
         mapTiles = L.tileLayer(mapConfig.tileUrl, {
             minZoom: mapConfig.minZoom,
             maxZoom: mapConfig.maxZoom,
-            //bounds: [[0, 0], [mapConfig.latMax, mapConfig.lngMax]],
             noWrap: true,
             tms: true,
         }).addTo(map);
@@ -819,8 +814,7 @@
         * Everything else seems to be up to date with the current version of leaflet.
         */
         map.setView(calc.center(mapConfig), mapConfig.defaultZoom);
-        map.setMaxBounds([[0, 0], [mapConfig.latMax, mapConfig.lngMax]]);
-        //map.setMaxBounds(calc.maxBounds(mapConfig));
+        map.setMaxBounds(calc.maxBounds(mapConfig));
 
         /*
         * Set up a series of layer groups, so that layers can be easily managed later in the code.
