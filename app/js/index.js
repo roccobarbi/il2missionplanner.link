@@ -574,15 +574,32 @@
      */
     function importMapState(saveData) {
         clearMap();
-        var importedMapConfig = util.getSelectedMapConfig(saveData.mapHash, content.maps);
+        let importedMapConfig = util.getSelectedMapConfig(saveData.mapHash, content.maps);
         window.location.hash = importedMapConfig.hash;
         selectMap(importedMapConfig);
         mapConfig = importedMapConfig;
         selectedMapIndex = mapConfig.selectIndex;
+        /*
+        * TODO: improve and remove breakage
+        * frontline: [
+        *   [
+        *       [],[]
+        *   ]
+        * ]*/
+        let invertFrontlineLat = function(frontline){
+            let invertedFrontLine = [[[], []]];
+            for (let i = 0; i < 2; i++) { // for each frontline
+                for (let j = 0; j < frontline[0][i].length; i++){
+                    invertedFrontLine[0][i].push([mapConfig.latMax - frontline[0][i][j][0], frontline[0][i][j][1]]);
+                }
+            }
+            return invertedFrontLine;
+
+        };
         if (saveData.routes) {
-            for (var i = 0; i < saveData.routes.length; i++) {
-                var route = saveData.routes[i];
-                var newRoute = L.polyline(route.latLngs, LINE_OPTIONS);
+            for (let i = 0; i < saveData.routes.length; i++) {
+                let route = [importedMapConfig.latMax - saveData.routes[i][0], saveData.routes[i][1]]; // latitide inverted
+                let newRoute = L.polyline(route.latLngs, LINE_OPTIONS);
                 newRoute.name = route.name;
                 newRoute.speed = route.speed;
                 newRoute.speeds = route.speeds;
@@ -591,9 +608,13 @@
             }
         }
         if (saveData.points) {
-            for (var i = 0; i < saveData.points.length; i++) {
-                var point = saveData.points[i];
-                var newPoint = L.marker(point.latLng, {
+            for (let i = 0; i < saveData.points.length; i++) {
+                let point = saveData.points[i];
+                let pointLatLng = {
+                    "lat": importedMapConfig.latMax - point.latLng.lat, // latitude inverted
+                    "lng": point.latLng.lng
+                };
+                let newPoint = L.marker(pointLatLng, {
                     icon: icons.factory(point.type, point.color)
                 });
                 newPoint.name = point.name;
@@ -604,10 +625,16 @@
                 applyTargetInfoCallback(newPoint);
             }
         }
+        /*
+        * TODO: analyse and improve
+        *
+        * This is almost certainly wrong and it only applies to a special case where only one frontline is present.
+        * */
         if (saveData.frontline) {
-            for (var frontNdx = 0; frontNdx < saveData.frontline.length; frontNdx++) { // for each frontline
-                var blueFront = saveData.frontline[frontNdx][0];
-                var redFront = saveData.frontline[frontNdx][1];
+            let invertedFrontLine = invertFrontlineLat(saveData.frontline);
+            for (let frontNdx = 0; frontNdx < saveData.frontline[0].length; frontNdx++) { // for each frontline
+                let blueFront = invertedFrontLine[0][frontNdx][0];
+                let redFront = invertedFrontLine[1][frontNdx][1];
                 L.polyline(blueFront, {color: BLUE_FRONT, opacity: 1}).addTo(frontline);
                 L.polyline(redFront, {color: RED_FRONT, opacity: 1}).addTo(frontline);
             }
@@ -703,85 +730,118 @@
         });
     }
 
-
-    /*
-    * This functionality allows external servers to store and embed maps.
-    * These maps are accessible via a fragment identifier in the url.
-    * */
-    if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
-        let responseBody = null;
-        /*var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);*/
-        let url = '';
-        switch (window.location.hash) {
-            case '#virtualpilots':
-                url = 'https://hw4bdhqxg9.execute-api.eu-south-1.amazonaws.com/getStoredMap?map=virtualpilots';
-                break;
-            default:
-                url = '';
-        }
-        if (url !== '') {
-            let xhr = util.buildGetXhr(url, function () { // TODO: get the file in a better way
-                if (xhr.readyState === 4) {
-                    responseBody = JSON.parse(xhr.responseText);
-                    importMapState(responseBody);
-                    fitViewToMission();
-                    checkButtonsDisabled();
-                }
-            });
+    /**
+     * Read the hash (if present) and check if it identifies a valid map (either stored locally, or embedded from a
+     * game server. If so, load it.
+     */
+    function loadMapFromHash() {
+        /*
+        * This functionality allows external servers to store and embed maps.
+        * These maps are accessible via a fragment identifier in the url.
+        * */
+        if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
+            let responseBody = null;
+            /*var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);*/
+            let url = '';
+            switch (window.location.hash) {
+                case '#virtualpilots':
+                    url = 'https://hw4bdhqxg9.execute-api.eu-south-1.amazonaws.com/getStoredMap?map=virtualpilots';
+                    break;
+                default:
+                    url = '';
+            }
+            if (url !== '') {
+                let xhr = util.buildGetXhr(url, function () { // TODO: get the file in a better way
+                    if (xhr.readyState === 4) {
+                        responseBody = JSON.parse(xhr.responseText);
+                        importMapState(responseBody);
+                        fitViewToMission();
+                        checkButtonsDisabled();
+                    }
+                });
+            }
         }
     }
 
-    /*
-    * The map configuration is a JSON object that describes each map. All map configurations can be found in content.js,
-    * in the mapConfigs variable.
-    * selectIndex is an integer index, unique to each map, starting from 1 for the stalingrad map.
-    */
-    mapConfig = util.getSelectedMapConfig(window.location.hash , content.maps);
-    selectedMapIndex = mapConfig.selectIndex;
-
-    /*
-     * Reference: https://leafletjs.com/reference-1.7.1.html#map-example
-     *
-     * L.CRS.Simple is "a simple C0ordinate Reference System that maps longitude and latitude into x and y directly".
+    /**
+     * Loads the map that is currently set in the hash map (loadMapFromHash should guarantee a locally stored map,
+     * unless the user loaded a wrong map state).
      */
-    map = L.map('map', {
-        crs: L.CRS.Simple,
-        attributionControl: false
-    });
+    function loadAndDrawMap() {
+        /*
+        * The map configuration is a JSON object that describes each map. All map configurations can be found in content.js,
+        * in the mapConfigs variable.
+        * selectIndex is an integer index, unique to each map, starting from 1 for the stalingrad map.
+        */
+        mapConfig = util.getSelectedMapConfig(window.location.hash, content.maps);
+        selectedMapIndex = mapConfig.selectIndex;
 
-    /*
-    * Reference: https://leafletjs.com/reference-1.7.1.html#tilelayer
-    *
-    * tms, if true, inverses Y axis numbering for tiles. Since it is true, here is the wikipedia definition of TMS:
-    * https://en.wikipedia.org/wiki/Tile_Map_Service
-    *
-    * The code probably needs to be updated. In the current version of leaflet, the noWrap property can only be found in
-    * the gridLayer object. There is also no reference to the continuousWorld property.
-    * TODO: update this code to the current version of leaflet.
-    */
-    mapTiles = L.tileLayer(mapConfig.tileUrl, {
-        minZoom: mapConfig.minZoom,
-        maxZoom: mapConfig.maxZoom,
-        noWrap: true,
-        tms: true
-    }).addTo(map);
+        let zoomCoefficient = Math.pow(2, mapConfig.maxZoom - mapConfig.minZoom);
+        L.CRS.MySimple = L.extend({}, L.CRS.Simple, {
+            //                      coefficients: a      b    c     d
+            transformation: new L.Transformation(1 / zoomCoefficient, 0, 1 / zoomCoefficient, 0) // Compute a and c coefficients so that  tile 0/0/0 is from [0, 0] to [img]
+        });
 
-    /*
-    * latMin and lngMin should always be set to zero in the map configuration, or calc.center won't work.
-    * Everything else seems to be up to date with the current version of leaflet.
-    */
-    map.setView(calc.center(mapConfig), mapConfig.defaultZoom);
-    map.setMaxBounds(calc.maxBounds(mapConfig));
+        /*
+         * Reference: https://leafletjs.com/reference-1.7.1.html#map-example
+         *
+         * L.CRS.Simple is "a simple Coordinate Reference System that maps longitude and latitude into x and y directly".
+         */
+        map = L.map('map', {
+            crs: L.CRS.MySimple,
+            attributionControl: false
+            //maxBounds: [0, 0, mapConfig.latMax, mapConfig.lngMax],
+            //minZoom: mapConfig.minZoom,
+            //maxZoom: mapConfig.maxZoom,
+            //bounds: [0, 0, mapConfig.latMax, mapConfig.lngMax]
+        });
 
-    /*
-    * Set up a series of layer groups, so that layers can be easily managed later in the code.
-    * This part seems to be up to date with the current version of leaflet.
-    */
-    drawnItems = L.featureGroup();
-    map.addLayer(drawnItems);
-    frontline = L.featureGroup();
-    map.addLayer(frontline);
-    hiddenLayers = L.featureGroup();
+        /*
+        * Reference: https://leafletjs.com/reference-1.7.1.html#tilelayer
+        *
+        * tms, if true, inverses Y axis numbering for tiles. Since it is true, here is the wikipedia definition of TMS:
+        * https://en.wikipedia.org/wiki/Tile_Map_Service
+        *
+        * The code probably needs to be updated. In the current version of leaflet, the noWrap property can only be found in
+        * the gridLayer object. There is also no reference to the continuousWorld property.
+        * TODO: update this code to the current version of leaflet.
+        */
+        mapTiles = L.tileLayer(mapConfig.tileUrl, {
+            minZoom: mapConfig.minZoom,
+            maxZoom: mapConfig.maxZoom,
+            //bounds: [[0, 0], [mapConfig.latMax, mapConfig.lngMax]],
+            noWrap: true,
+            tms: true,
+        }).addTo(map);
+
+        /*
+        * latMin and lngMin should always be set to zero in the map configuration, or calc.center won't work.
+        * Everything else seems to be up to date with the current version of leaflet.
+        */
+        map.setView(calc.center(mapConfig), mapConfig.defaultZoom);
+        map.setMaxBounds([[0, 0], [mapConfig.latMax, mapConfig.lngMax]]);
+        //map.setMaxBounds(calc.maxBounds(mapConfig));
+
+        /*
+        * Set up a series of layer groups, so that layers can be easily managed later in the code.
+        * This part seems to be up to date with the current version of leaflet.
+        */
+        drawnItems = L.featureGroup();
+        map.addLayer(drawnItems);
+        frontline = L.featureGroup();
+        map.addLayer(frontline);
+        hiddenLayers = L.featureGroup();
+    }
+
+    /**
+     * Run the initial setup.
+     */
+    function setup() {
+        loadMapFromHash();
+        loadAndDrawMap();
+    }
+
+    setup();
 
     /*
     * Reference: https://leafletjs.com/examples/extending/extending-3-controls.html
@@ -790,8 +850,10 @@
     * L.Control.TitleControl is defined in control.js
     * L.Control.CustomToolbar is defined in control.js
     * L.Control.Draw is an external library
+    *
+    * TODO: understand what was the purpose for the pice of code I commented out (which was throwing an error)
     */
-    drawControl = new L.Control.Draw({
+    /*drawControl = new L.Control.Draw({
         draw: {
             polygon: false,
             rectangle: false,
@@ -815,7 +877,7 @@
             }
         }
     });
-    map.addControl(drawControl);
+    map.addControl(drawControl);*/
 
     var titleControl = new L.Control.TitleControl({});
     map.addControl(titleControl);
