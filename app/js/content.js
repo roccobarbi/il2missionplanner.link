@@ -203,7 +203,7 @@ module.exports = (function() {
             lngMin: 0,
             lngMax: 4096,
             lngGridMax: 11.7973,
-            gridHopZoom: 5,
+            gridHopZoom: 4,
             defaultZoom: 3,
             minZoom: 0,
             maxZoom: 4,
