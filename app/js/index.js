@@ -1,16 +1,13 @@
-(function() {
+(function() { // jshint ignore: line
 
     'use strict';
 
-    var fs = require('fs');
-    var content = require('./content.js');
-    var calc = require('./calc.js');
-    var util = require('./util.js');
-    var icons = require('./icons.js')(L); // The L object is created by Leaflet
-    var webdis = require('./webdis.js');
+    const content = require('./content.js');
+    const calc = require('./calc.js');
+    const util = require('./util.js');
+    const icons = require('./icons.js')(L); // The L object is created by Leaflet
+    const webdis = require('./webdis.js');
     require('./controls.js');
-
-    var conf = JSON.parse(fs.readFileSync('dist/conf.json', 'utf8')); // The path probably reflects how the application is packaged by npm
 
     const
         RED = '#9A070B',
@@ -25,8 +22,8 @@
         }
     ;
 
-    var map, mapTiles, mapConfig, drawnItems, hiddenLayers, frontline,
-            drawControl, selectedMapIndex;
+    let map, mapTiles, mapConfig, drawnItems, hiddenLayers, frontline,
+        drawControl, selectedMapIndex;
 
     /*
     * Application state
@@ -47,7 +44,7 @@
     * - on the editstop event
     * - on the deletestop event
     * */
-    var state = {
+    const state = {
         colorsInverted: false,
         showBackground: true,
         streaming: false,
@@ -60,7 +57,7 @@
     L.drawLocal = content.augmentedLeafletDrawLocal;
 
     // Initialize form validation
-    var V = new Validatinator(content.validatinatorConfig);
+    const V = new Validatinator(content.validatinatorConfig);
 
     /**
      * True if the map is empty.
@@ -69,6 +66,19 @@
      */
     function mapIsEmpty() {
       return drawnItems.getLayers().length === 0 && frontline.getLayers().length === 0;
+    }
+
+    /**
+     * When a new flight leg is added, calculate the flight time based on speed and distance and use this information,
+     * together with the heading, to draw the flight leg on the map.
+     * @param marker
+     */
+    function applyCustomFlightLegCallback(marker) {
+        marker.options.time = util.formatTime(calc.time(marker.options.speed, marker.options.distance));
+        const newContent = util.formatFlightLegMarker(
+            marker.options.distance, marker.options.heading, marker.options.speed, marker.options.time);
+        marker.setIcon(icons.textIconFactory(newContent, 'flight-leg ' + getMapTextClasses(state)));
+        publishMapState();
     }
 
     /**
@@ -113,24 +123,24 @@
         if (state.changing || state.connected) {
             return; // Do nothing if the map is changing, or if the user is connected to a stream
         }
-        var parentRoute = drawnItems.getLayer(marker.parentId);
+        const parentRoute = drawnItems.getLayer(marker.parentId);
         map.openModal({
             speed: parentRoute.speeds[marker.index],
             template: content.flightLegModalTemplate,
             zIndex: 10000,
             onShow: function(e) {
-                var element = document.getElementById('flight-leg-speed');
+                const element = document.getElementById('flight-leg-speed');
                 element.focus();
                 element.select();
                 L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
                     if (V.passes('flight-leg-form')) {
-                        var newSpeed = parseInt(element.value);
+                        const newSpeed = parseInt(element.value);
                         parentRoute.speeds[marker.index] = newSpeed;
                         marker.options.speed = newSpeed;
                         applyCustomFlightLegCallback(marker);
                         e.modal.hide();
                     } else {
-                        var errorElement = document.getElementById('flight-leg-error');
+                        const errorElement = document.getElementById('flight-leg-error');
                         errorElement.innerHTML = 'Please input a valid speed in kilometers per hour.';
                         util.removeClass(errorElement, 'hidden-section');
                         errorElement.focus();
@@ -143,17 +153,120 @@
         });
     }
 
+
+
     /**
-     * When a new flight leg is added, calculate the flight time based on speed and distance and use this information,
-     * together with the heading, to draw the flight leg on the map.
-     * @param marker
+     * Manage the user actions that enter a new target.
+     *
+     * @param target
      */
-    function applyCustomFlightLegCallback(marker) {
-        marker.options.time = util.formatTime(calc.time(marker.options.speed, marker.options.distance));
-        var newContent = util.formatFlightLegMarker(
-                marker.options.distance, marker.options.heading, marker.options.speed, marker.options.time);
-        marker.setIcon(icons.textIconFactory(newContent, 'flight-leg ' + getMapTextClasses(state)));
-        publishMapState();
+    function applyTargetInfo(target) {
+        if (state.changing || state.connected) {
+            return;
+        }
+        let newTarget = false;
+        if (typeof target.name === 'undefined') {
+            target.name = content.default.pointName;
+            newTarget = true;
+        }
+        if (typeof target.notes === 'undefined') {
+            target.notes = '';
+        }
+        if (typeof target.type === 'undefined') {
+            target.type = content.default.pointType;
+        }
+        if (typeof target.color === 'undefined') {
+            target.color = content.default.pointColor;
+        }
+        let clickedOk = false;
+        map.openModal({
+            name: target.name,
+            notes: target.notes,
+            template: content.pointModalTemplate,
+            zIndex: 10000,
+            onShow: function(e) {
+                const element = document.getElementById('target-name');
+                element.focus();
+                element.select();
+                const typeSelect = document.getElementById('point-type-select');
+                typeSelect.value = target.type;
+                const colorSelect = document.getElementById('point-color-select');
+                colorSelect.value = target.color;
+                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
+                    clickedOk = true;
+                    e.modal.hide();
+                });
+                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                    e.modal.hide();
+                });
+            },
+            onHide: function() {
+                if (clickedOk) {
+                    target.name = document.getElementById('target-name').value;
+                    target.notes = document.getElementById('target-notes').value;
+                    target.type = document.getElementById('point-type-select').value;
+                    target.color = document.getElementById('point-color-select').value;
+                    applyTargetInfoCallback(target, newTarget);
+                } else if (newTarget) {
+                    drawnItems.removeLayer(target);
+                } else {
+                    applyTargetInfoCallback(target, newTarget);
+                }
+                checkButtonsDisabled();
+            }
+        });
+    }
+
+    /**
+     * Manage the user actions that enter a new flight plan.
+     *
+     * @param route
+     */
+    function applyFlightPlan(route) {
+        if (state.changing || state.connected) {
+            return;
+        }
+        let newFlight = false;
+        if (typeof route.speed === 'undefined') {
+            route.speed = content.default.flightSpeed;
+            newFlight = true;
+        }
+        if (typeof route.name === 'undefined') {
+            route.name = content.default.flightName;
+        }
+        const initialSpeed = route.speed;
+        let clickedOk = false;
+        map.openModal({
+            speed: route.speed,
+            name: route.name,
+            template: content.flightModalTemplate,
+            zIndex: 10000,
+            onShow: function(e) {
+                const element = document.getElementById('flight-name');
+                element.focus();
+                element.select();
+                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
+                    clickedOk = true;
+                    e.modal.hide();
+                });
+                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
+                    e.modal.hide();
+                });
+            },
+            onHide: function() {
+                if (clickedOk) {
+                    route.name = document.getElementById('flight-name').value;
+                    route.speed = parseInt(document.getElementById('flight-speed').value);
+                    route.speedDirty = (route.speed !== initialSpeed);
+                    applyFlightPlanCallback(route, newFlight);
+                } else if (newFlight) {
+                    drawnItems.removeLayer(route);
+                } else {
+                    applyFlightPlanCallback(route, newFlight);
+                }
+                checkButtonsDisabled();
+            }
+        });
     }
 
     /**
@@ -183,21 +296,21 @@
         if (newFlight) {
             route.on('click', routeClickHandlerFactory(route));
         }
-        var id = route._leaflet_id;
-        var coords = route.getLatLngs();
-        var decorator = newFlightDecorator(route);
+        const id = route._leaflet_id;
+        const coords = route.getLatLngs();
+        const decorator = newFlightDecorator(route);
         decorator.parentId = id;
         decorator.addTo(map);
         if (typeof route.speeds === 'undefined' || route.speedDirty || route.wasEdited) {
             route.speeds = util.defaultSpeedArray(route.speed, coords.length-1);
         }
-        for (var i = 0; i < coords.length-1; i++) { // TODO: good candidate to extract a function
-            var distance = mapConfig.scale * calc.distance(coords[i], coords[i+1]);
-            var heading = calc.heading(coords[i], coords[i+1]);
-            var midpoint = calc.midpoint(coords[i], coords[i+1]);
-            var time = util.formatTime(calc.time(route.speeds[i], distance));
-            var markerContent = util.formatFlightLegMarker(distance, heading, route.speeds[i], time);
-            var marker =  L.marker(midpoint, {
+        for (let i = 0; i < coords.length-1; i++) { // TODO: good candidate to extract a function
+            const distance = mapConfig.scale * calc.distance(coords[i], coords[i + 1]);
+            const heading = calc.heading(coords[i], coords[i + 1]);
+            const midpoint = calc.midpoint(coords[i], coords[i + 1]);
+            const time = util.formatTime(calc.time(route.speeds[i], distance));
+            const markerContent = util.formatFlightLegMarker(distance, heading, route.speeds[i], time);
+            const marker = L.marker(midpoint, {
                 distance: distance,
                 heading: heading,
                 time: time,
@@ -209,7 +322,7 @@
             marker.on('click', markerClickHandlerFactory(marker));
             marker.addTo(map);
         }
-        var endMarker = L.circleMarker(coords[coords.length-1], { // TODO: good candidate to extract a function
+        const endMarker = L.circleMarker(coords[coords.length - 1], { // TODO: good candidate to extract a function
             interactive: false,
             radius: 3,
             color: RED,
@@ -219,8 +332,8 @@
         });
         endMarker.parentId = id;
         endMarker.addTo(map);
-        var nameCoords = L.latLng(coords[0].lat, coords[0].lng);
-        var nameMarker = L.marker(nameCoords, {
+        const nameCoords = L.latLng(coords[0].lat, coords[0].lng);
+        const nameMarker = L.marker(nameCoords, {
             draggable: false,
             icon: icons.textIconFactory(route.name, 'map-title flight-titles ' + getMapTextClasses(state))
         });
@@ -228,58 +341,6 @@
         nameMarker.on('click', routeClickHandlerFactory(route));
         nameMarker.addTo(map);
         publishMapState();
-    }
-
-    /**
-     * Manage the user actions that enter a new flight plan.
-     *
-     * @param route
-     */
-    function applyFlightPlan(route) {
-        if (state.changing || state.connected) {
-            return;
-        }
-        var newFlight = false;
-        if (typeof route.speed === 'undefined') {
-            route.speed = content.default.flightSpeed;
-            newFlight = true;
-        }
-        if (typeof route.name === 'undefined') {
-            route.name = content.default.flightName;
-        }
-        var initialSpeed = route.speed;
-        var clickedOk = false;
-        map.openModal({
-            speed: route.speed,
-            name: route.name,
-            template: content.flightModalTemplate,
-            zIndex: 10000,
-            onShow: function(e) {
-                var element = document.getElementById('flight-name');
-                element.focus();
-                element.select();
-                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
-                    clickedOk = true;
-                    e.modal.hide();
-                });
-                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                    e.modal.hide();
-                });
-            },
-            onHide: function(e) {
-                if (clickedOk) {
-                    route.name = document.getElementById('flight-name').value;
-                    route.speed = parseInt(document.getElementById('flight-speed').value);
-                    route.speedDirty = (route.speed !== initialSpeed);
-                    applyFlightPlanCallback(route, newFlight);
-                } else if (newFlight) {
-                    drawnItems.removeLayer(route);
-                } else {
-                    applyFlightPlanCallback(route, newFlight);
-                }
-                checkButtonsDisabled();
-            }
-        });
     }
 
     /**
@@ -298,14 +359,15 @@
                 applyTargetInfo(clickedTarget);
             };
         }
-        var id = target._leaflet_id;
-        var coords = target.getLatLng();
+
+        const id = target._leaflet_id;
+        const coords = target.getLatLng();
         target.setIcon(icons.factory(target.type, target.color));
         if (newTarget) {
             target.on('click', targetClickHandlerFactory(target));
         }
-        var nameCoords = L.latLng(coords.lat, coords.lng);
-        var nameMarker = L.marker(nameCoords, {
+        const nameCoords = L.latLng(coords.lat, coords.lng);
+        const nameMarker = L.marker(nameCoords, {
             draggable: false,
             icon: icons.textIconFactory(target.name, 'map-title target-title ' + getMapTextClasses(state))
         });
@@ -321,74 +383,12 @@
     }
 
     /**
-     * Manage the user actions that enter a new target.
-     *
-     * @param target
-     */
-    function applyTargetInfo(target) {
-        if (state.changing || state.connected) {
-            return;
-        }
-        var newTarget = false;
-        if (typeof target.name === 'undefined') {
-            target.name = content.default.pointName;
-            var newTarget = true;
-        }
-        if (typeof target.notes === 'undefined') {
-            target.notes = '';
-        }
-        if (typeof target.type === 'undefined') {
-            target.type = content.default.pointType;
-        }
-        if (typeof target.color === 'undefined') {
-            target.color = content.default.pointColor;
-        }
-        var clickedOk = false;
-        map.openModal({
-            name: target.name,
-            notes: target.notes,
-            template: content.pointModalTemplate,
-            zIndex: 10000,
-            onShow: function(e) {
-                var element = document.getElementById('target-name');
-                element.focus();
-                element.select();
-                var typeSelect = document.getElementById('point-type-select');
-                typeSelect.value = target.type;
-                var colorSelect = document.getElementById('point-color-select');
-                colorSelect.value = target.color;
-                L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
-                    clickedOk = true;
-                    e.modal.hide();
-                });
-                L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                    e.modal.hide();
-                });
-            },
-            onHide: function(e) {
-                if (clickedOk) {
-                    target.name = document.getElementById('target-name').value;
-                    target.notes = document.getElementById('target-notes').value;
-                    target.type = document.getElementById('point-type-select').value;
-                    target.color = document.getElementById('point-color-select').value;
-                    applyTargetInfoCallback(target, newTarget);
-                } else if (newTarget) {
-                    drawnItems.removeLayer(target);
-                } else {
-                    applyTargetInfoCallback(target, newTarget);
-                }
-                checkButtonsDisabled();
-            }
-        });
-    }
-
-    /**
      * Remove the child layers associated to a certain parent layer.
      *
      * @param parentLayers one or more parent layers
      */
     function deleteAssociatedLayers(parentLayers) {
-        var toDelete = [];
+        const toDelete = [];
         parentLayers.eachLayer(function(layer) {
             toDelete.push(layer._leaflet_id);
         });
@@ -440,8 +440,8 @@
      * @param buttonList an array of one or more ids of buttons
      */
     function disableButtons(buttonList) {
-        for (var i = 0; i < buttonList.length; i++) {
-            var element = document.getElementById(buttonList[i]);
+        for (let i = 0; i < buttonList.length; i++) {
+            const element = document.getElementById(buttonList[i]);
             element.classList.add('leaflet-disabled');
         }
     }
@@ -452,8 +452,8 @@
      * @param buttonList an array of one or more ids of buttons
      */
     function enableButtons(buttonList) {
-        for (var i = 0; i < buttonList.length; i++) {
-            var element = document.getElementById(buttonList[i]);
+        for (let i = 0; i < buttonList.length; i++) {
+            const element = document.getElementById(buttonList[i]);
             element.classList.remove('leaflet-disabled');
         }
     }
@@ -462,7 +462,7 @@
      * Disable buttons if the map is empty, otherwise enable them.
      */
     function checkButtonsDisabled() {
-        var buttons = ['export-button', 'missionhop-button'];
+        const buttons = ['export-button', 'missionhop-button'];
         if (!state.connected) { // TODO: understand the purpose of this check
             buttons.push('clear-button');
         }
@@ -490,13 +490,13 @@
      * @returns {{routes: *[], mapHash: *, points: *[]}}
      */
     function exportMapState() {
-        var saveData = {
+        const saveData = {
             mapHash: window.location.hash,
             routes: [],
             points: []
         };
         drawnItems.eachLayer(function(layer) {
-            var saveLayer = {};
+            const saveLayer = {};
             if (util.isLine(layer)) {
                 saveLayer.latLngs = layer.getLatLngs();
                 saveLayer.name = layer.name;
@@ -554,7 +554,7 @@
      * @returns {string}
      */
     function getMapTextClasses(state) {
-        var classes = 'map-text';
+        let classes = 'map-text';
         if (state.colorsInverted) {
             classes += ' inverted';
         }
@@ -647,7 +647,7 @@
      */
     function publishMapState() {
         if (state.streaming) {
-            var saveData = exportMapState();
+            const saveData = exportMapState();
             webdis.publish(state.streamInfo.name, state.streamInfo.password,
                     state.streamInfo.code, window.escape(JSON.stringify(saveData)));
         }
@@ -685,8 +685,8 @@
      * @param elementId
      */
     function setupCheckboxTogglableElement(checkboxId, elementId) {
-        var checkbox = document.getElementById(checkboxId);
-        var element = document.getElementById(elementId);
+        const checkbox = document.getElementById(checkboxId);
+        const element = document.getElementById(elementId);
         L.DomEvent.on(checkbox, 'click', function() {
             if (checkbox.checked) {
                 util.removeClass(element, 'hidden-section');
@@ -720,7 +720,7 @@
             if (!state.connected) {
                 return;
             }
-            var saveData = e.detail;
+            const saveData = e.detail;
             if (saveData !== 1) {
                 clearMap();
                 importMapState(JSON.parse(saveData));
@@ -875,7 +875,7 @@
     });
     map.addControl(drawControl);*/
 
-    var titleControl = new L.Control.TitleControl({});
+    const titleControl = new L.Control.TitleControl({});
     map.addControl(titleControl);
 
     var clearButton = new L.Control.CustomToolbar({
@@ -890,7 +890,7 @@
                         map.openModal({
                             template: content.confirmClearModalTemplate,
                             onShow: function(e) {
-                                var element = document.getElementById('confirm-cancel-button');
+                                const element = document.getElementById('confirm-cancel-button');
                                 element.focus();
                                 L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function() {
                                     clearMap();
@@ -918,7 +918,7 @@
         * This specific toolbar component manages the map settings (e.g. which map has been selected) and the help.
         * Its UI is based on app/html/settingsModal.html and app/html/helpModal.html
         */
-        var helpSettingsToolbar = new L.Control.CustomToolbar({
+        const helpSettingsToolbar = new L.Control.CustomToolbar({
             position: 'bottomright',
             buttons: [
                 {
@@ -929,17 +929,17 @@
                         map.openModal({
                             template: content.settingsModalTemplate,
                             onShow: function (e) {
-                                var mapSelect = document.getElementById('map-select');
+                                const mapSelect = document.getElementById('map-select');
                                 mapSelect.selectedIndex = selectedMapIndex;
-                                var originalIndex = selectedMapIndex;
-                                var invertCheckbox = document.getElementById('invert-text-checkbox');
+                                const originalIndex = selectedMapIndex;
+                                const invertCheckbox = document.getElementById('invert-text-checkbox');
                                 invertCheckbox.checked = state.colorsInverted;
-                                var backgroundCheckbox = document.getElementById('text-background-checkbox');
+                                const backgroundCheckbox = document.getElementById('text-background-checkbox');
                                 backgroundCheckbox.checked = state.showBackground;
                                 mapSelect.focus();
                                 L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
                                     if (mapSelect.selectedIndex !== originalIndex) {
-                                        var selectedMap = mapSelect.options[mapSelect.selectedIndex].value;
+                                        const selectedMap = mapSelect.options[mapSelect.selectedIndex].value;
                                         mapConfig = content.maps[selectedMap];
                                         selectMap(mapConfig);
                                         selectedMapIndex = mapSelect.selectedIndex;
@@ -1008,7 +1008,7 @@
         * TODO: analyse how the streaming server works (or more likely, reengineer it).
         * TODO: rewrite component based on new streaming server
         */
-        var importExportToolbar = new L.Control.CustomToolbar({
+        const importExportToolbar = new L.Control.CustomToolbar({
             position: 'bottomleft',
             buttons: [
                 {
@@ -1019,11 +1019,11 @@
                         map.openModal({
                             template: content.importModalTemplate,
                             onShow: function (e) {
-                                var importInput = document.getElementById('import-file');
+                                const importInput = document.getElementById('import-file');
                                 importInput.focus();
-                                var fileContent;
+                                let fileContent;
                                 L.DomEvent.on(importInput, 'change', function (evt) {
-                                    var reader = new window.FileReader();
+                                    const reader = new window.FileReader();
                                     reader.onload = function (evt) {
                                         if (evt.target.readyState !== 2) {
                                             return;
@@ -1037,7 +1037,7 @@
                                     reader.readAsText(evt.target.files[0]);
                                 });
                                 L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
-                                    var saveData = JSON.parse(fileContent);
+                                    const saveData = JSON.parse(fileContent);
                                     importMapState(saveData);
                                     e.modal.hide();
                                     fitViewToMission();
@@ -1262,7 +1262,7 @@
         *
         * The UI is based on: app/html/gridJumpModal.html
         */
-        var gridToolbar = new L.Control.CustomToolbar({
+        const gridToolbar = new L.Control.CustomToolbar({
             position: 'topleft',
             buttons: [
                 {
@@ -1273,16 +1273,16 @@
                         map.openModal({
                             template: content.gridJumpModalTemplate,
                             onShow: function (e) {
-                                var gridElement = document.getElementById('grid-input');
+                                const gridElement = document.getElementById('grid-input');
                                 gridElement.focus();
                                 L.DomEvent.on(e.modal._container.querySelector('.modal-ok'), 'click', function () {
                                     if (V.passes('grid-jump-form')) {
-                                        var grid = gridElement.value;
-                                        var viewLatLng = calc.gridLatLng(grid, mapConfig);
+                                        const grid = gridElement.value;
+                                        const viewLatLng = calc.gridLatLng(grid, mapConfig);
                                         map.setView(viewLatLng, mapConfig.gridHopZoom);
                                         e.modal.hide();
                                     } else {
-                                        var errorElement = document.getElementById('grid-jump-error');
+                                        const errorElement = document.getElementById('grid-jump-error');
                                         errorElement.innerHTML = 'Please input a valid four digit grid number.';
                                         util.removeClass(errorElement, 'hidden-section');
                                         errorElement.focus();
