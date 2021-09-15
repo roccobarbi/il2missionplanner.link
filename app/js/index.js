@@ -23,7 +23,7 @@
     ;
 
     let map, mapTiles, mapConfig, drawnItems, hiddenLayers, frontline,
-        drawControl, selectedMapIndex;
+        selectedMapIndex;
 
     /*
     * Application state
@@ -66,6 +66,90 @@
      */
     function mapIsEmpty() {
       return drawnItems.getLayers().length === 0 && frontline.getLayers().length === 0;
+    }
+
+    /**
+     * Disable one or more buttons, identified by their id.
+     *
+     * @param buttonList an array of one or more ids of buttons
+     */
+    function disableButtons(buttonList) {
+        for (let i = 0; i < buttonList.length; i++) {
+            const element = document.getElementById(buttonList[i]);
+            element.classList.add('leaflet-disabled');
+        }
+    }
+
+    /**
+     * Enable one or more buttons, identified by their id.
+     *
+     * @param buttonList an array of one or more ids of buttons
+     */
+    function enableButtons(buttonList) {
+        for (let i = 0; i < buttonList.length; i++) {
+            const element = document.getElementById(buttonList[i]);
+            element.classList.remove('leaflet-disabled');
+        }
+    }
+
+    /**
+     * Given a map state, it returns the class that should be used to display text on the map.
+     * TODO: check if this process can be simplified directly via the UI. This feels like a magic number.
+     *
+     * @param state
+     * @returns {string}
+     */
+    function getMapTextClasses(state) {
+        let classes = 'map-text';
+        if (state.colorsInverted) {
+            classes += ' inverted';
+        }
+        if (!state.showBackground) {
+            classes += ' nobg';
+        }
+        return classes;
+    }
+
+    /**
+     * Stores the map state (including all markers and waypoints) to a JavaScript object.
+     *
+     * @returns {{routes: *[], mapHash: *, points: *[]}}
+     */
+    function exportMapState() {
+        const saveData = {
+            mapHash: window.location.hash,
+            routes: [],
+            points: []
+        };
+        drawnItems.eachLayer(function(layer) {
+            const saveLayer = {};
+            if (util.isLine(layer)) {
+                saveLayer.latLngs = layer.getLatLngs();
+                saveLayer.name = layer.name;
+                saveLayer.speed = layer.speed;
+                saveLayer.speeds = layer.speeds;
+                saveData.routes.push(saveLayer);
+            } else if (util.isMarker(layer)) {
+                saveLayer.latLng = layer.getLatLng();
+                saveLayer.name = layer.name;
+                saveLayer.type = layer.type;
+                saveLayer.color = layer.color;
+                saveLayer.notes = layer.notes;
+                saveData.points.push(saveLayer);
+            }
+        });
+        return saveData;
+    }
+
+    /**
+     * If the user is streaming his map, publish the current state, so that anyone who subscribed to it can see it.
+     */
+    function publishMapState() {
+        if (state.streaming) {
+            const saveData = exportMapState();
+            webdis.publish(state.streamInfo.name, state.streamInfo.password,
+                state.streamInfo.code, window.escape(JSON.stringify(saveData)));
+        }
     }
 
     /**
@@ -153,7 +237,43 @@
         });
     }
 
+    /**
+     * Remove the child layers associated to a certain parent layer.
+     *
+     * @param parentLayers one or more parent layers
+     */
+    function deleteAssociatedLayers(parentLayers) {
+        const toDelete = [];
+        parentLayers.eachLayer(function(layer) {
+            toDelete.push(layer._leaflet_id);
+        });
 
+        map.eachLayer(function(layer) {
+            if (toDelete.indexOf(layer.parentId) !== -1) {
+                map.removeLayer(layer);
+            }
+        });
+        hiddenLayers.eachLayer(function(layer) {
+            if (toDelete.indexOf(layer.parentId) !== -1) {
+                hiddenLayers.removeLayer(layer);
+            }
+        });
+    }
+
+    /**
+     * Disable buttons if the map is empty, otherwise enable them.
+     */
+    function checkButtonsDisabled() {
+        const buttons = ['export-button', 'missionhop-button'];
+        if (!state.connected) { // TODO: understand the purpose of this check
+            buttons.push('clear-button');
+        }
+        if (mapIsEmpty()) {
+            disableButtons(buttons);
+        } else {
+            enableButtons(buttons);
+        }
+    }
 
     /**
      * Manage the user actions that enter a new target.
@@ -218,6 +338,45 @@
     }
 
     /**
+     * Applies a target to the map.
+     *
+     * @param target
+     * @param newTarget
+     */
+    function applyTargetInfoCallback(target, newTarget) { // jshint ignore:line
+        function targetClickHandlerFactory(clickedTarget) {
+            return function() {
+                if (state.changing || state.connected) {
+                    return;
+                }
+                deleteAssociatedLayers(L.layerGroup([clickedTarget]));
+                applyTargetInfo(clickedTarget);
+            };
+        }
+
+        const id = target._leaflet_id;
+        const coords = target.getLatLng();
+        target.setIcon(icons.factory(target.type, target.color));
+        if (newTarget) {
+            target.on('click', targetClickHandlerFactory(target));
+        }
+        const nameCoords = L.latLng(coords.lat, coords.lng);
+        const nameMarker = L.marker(nameCoords, {
+            draggable: false,
+            icon: icons.textIconFactory(target.name, 'map-title target-title ' + getMapTextClasses(state))
+        });
+        nameMarker.parentId = id;
+        nameMarker.on('click', targetClickHandlerFactory(target));
+        nameMarker.addTo(map);
+        if (target.notes !== '') {
+            target.bindTooltip(target.notes, {
+                direction: 'left'
+            }).addTo(map);
+        }
+        publishMapState();
+    }
+
+    /**
      * Manage the user actions that enter a new flight plan.
      *
      * @param route
@@ -275,7 +434,7 @@
      * @param route
      * @param newFlight
      */
-    function applyFlightPlanCallback(route, newFlight) {
+    function applyFlightPlanCallback(route, newFlight) { // jshint ignore:line
         function routeClickHandlerFactory(clickedRoute) {
             return function() {
                 if (state.changing || state.connected) {
@@ -344,68 +503,6 @@
     }
 
     /**
-     * Applies a target to the map.
-     *
-     * @param target
-     * @param newTarget
-     */
-    function applyTargetInfoCallback(target, newTarget) {
-        function targetClickHandlerFactory(clickedTarget) {
-            return function() {
-                if (state.changing || state.connected) {
-                    return;
-                }
-                deleteAssociatedLayers(L.layerGroup([clickedTarget]));
-                applyTargetInfo(clickedTarget);
-            };
-        }
-
-        const id = target._leaflet_id;
-        const coords = target.getLatLng();
-        target.setIcon(icons.factory(target.type, target.color));
-        if (newTarget) {
-            target.on('click', targetClickHandlerFactory(target));
-        }
-        const nameCoords = L.latLng(coords.lat, coords.lng);
-        const nameMarker = L.marker(nameCoords, {
-            draggable: false,
-            icon: icons.textIconFactory(target.name, 'map-title target-title ' + getMapTextClasses(state))
-        });
-        nameMarker.parentId = id;
-        nameMarker.on('click', targetClickHandlerFactory(target));
-        nameMarker.addTo(map);
-        if (target.notes !== '') {
-            target.bindTooltip(target.notes, {
-                direction: 'left'
-            }).addTo(map);
-        }
-        publishMapState();
-    }
-
-    /**
-     * Remove the child layers associated to a certain parent layer.
-     *
-     * @param parentLayers one or more parent layers
-     */
-    function deleteAssociatedLayers(parentLayers) {
-        const toDelete = [];
-        parentLayers.eachLayer(function(layer) {
-            toDelete.push(layer._leaflet_id);
-        });
-
-        map.eachLayer(function(layer) {
-            if (toDelete.indexOf(layer.parentId) !== -1) {
-                map.removeLayer(layer);
-            }
-        });
-        hiddenLayers.eachLayer(function(layer) {
-            if (toDelete.indexOf(layer.parentId) !== -1) {
-                hiddenLayers.removeLayer(layer);
-            }
-        });
-    }
-
-    /**
      * Move all child layers of a certain parent layer to another layer.
      *
      * @param from source layer
@@ -435,45 +532,6 @@
     }
 
     /**
-     * Disable one or more buttons, identified by their id.
-     *
-     * @param buttonList an array of one or more ids of buttons
-     */
-    function disableButtons(buttonList) {
-        for (let i = 0; i < buttonList.length; i++) {
-            const element = document.getElementById(buttonList[i]);
-            element.classList.add('leaflet-disabled');
-        }
-    }
-
-    /**
-     * Enable one or more buttons, identified by their id.
-     *
-     * @param buttonList an array of one or more ids of buttons
-     */
-    function enableButtons(buttonList) {
-        for (let i = 0; i < buttonList.length; i++) {
-            const element = document.getElementById(buttonList[i]);
-            element.classList.remove('leaflet-disabled');
-        }
-    }
-
-    /**
-     * Disable buttons if the map is empty, otherwise enable them.
-     */
-    function checkButtonsDisabled() {
-        const buttons = ['export-button', 'missionhop-button'];
-        if (!state.connected) { // TODO: understand the purpose of this check
-            buttons.push('clear-button');
-        }
-        if (mapIsEmpty()) {
-            disableButtons(buttons);
-        } else {
-            enableButtons(buttons);
-        }
-    }
-
-    /**
      * Clear all layers.
      */
     function clearMap() {
@@ -482,37 +540,6 @@
         hideChildLayers();
         hiddenLayers.clearLayers();
         publishMapState();
-    }
-
-    /**
-     * Stores the map state (including all markers and waypoints) to a JavaScript object.
-     *
-     * @returns {{routes: *[], mapHash: *, points: *[]}}
-     */
-    function exportMapState() {
-        const saveData = {
-            mapHash: window.location.hash,
-            routes: [],
-            points: []
-        };
-        drawnItems.eachLayer(function(layer) {
-            const saveLayer = {};
-            if (util.isLine(layer)) {
-                saveLayer.latLngs = layer.getLatLngs();
-                saveLayer.name = layer.name;
-                saveLayer.speed = layer.speed;
-                saveLayer.speeds = layer.speeds;
-                saveData.routes.push(saveLayer);
-            } else if (util.isMarker(layer)) {
-                saveLayer.latLng = layer.getLatLng();
-                saveLayer.name = layer.name;
-                saveLayer.type = layer.type;
-                saveLayer.color = layer.color;
-                saveLayer.notes = layer.notes;
-                saveData.points.push(saveLayer);
-            }
-        });
-        return saveData;
     }
 
     /**
@@ -544,24 +571,6 @@
      */
     function fitViewToMission() {
         map.fitBounds(drawnItems.getBounds());
-    }
-
-    /**
-     * Given a map state, it returns the class that should be used to display text on the map.
-     * TODO: check if this process can be simplified directly via the UI. This feels like a magic number.
-     *
-     * @param state
-     * @returns {string}
-     */
-    function getMapTextClasses(state) {
-        let classes = 'map-text';
-        if (state.colorsInverted) {
-            classes += ' inverted';
-        }
-        if (!state.showBackground) {
-            classes += ' nobg';
-        }
-        return classes;
     }
 
     /**
@@ -643,61 +652,6 @@
     }
 
     /**
-     * If the user is streaming his map, publish the current state, so that anyone who subscribed to it can see it.
-     */
-    function publishMapState() {
-        if (state.streaming) {
-            const saveData = exportMapState();
-            webdis.publish(state.streamInfo.name, state.streamInfo.password,
-                    state.streamInfo.code, window.escape(JSON.stringify(saveData)));
-        }
-    }
-
-    /**
-     * Remove some controls to start working in connected mode.
-     *
-     * TODO: check why this is required.
-     */
-    function startConnectedMode() {
-        map.removeControl(drawControl);
-        map.removeControl(clearButton);
-    }
-
-    /**
-     * Add some controls to stop working in connected mode.
-     *
-     * TODO: check why this is required.
-     */
-    function endConnectedMode() {
-        map.removeControl(gridToolbar);
-        map.removeControl(importExportToolbar);
-        map.addControl(drawControl);
-        map.addControl(gridToolbar);
-        map.addControl(clearButton);
-        map.addControl(importExportToolbar);
-        checkButtonsDisabled();
-    }
-
-    /**
-     * Set up a certain checkbox and element, so that if the checkbox is unchecked the element is hidden, and if the
-     * checkbox is checked, the element is visible.
-     * @param checkboxId
-     * @param elementId
-     */
-    function setupCheckboxTogglableElement(checkboxId, elementId) {
-        const checkbox = document.getElementById(checkboxId);
-        const element = document.getElementById(elementId);
-        L.DomEvent.on(checkbox, 'click', function() {
-            if (checkbox.checked) {
-                util.removeClass(element, 'hidden-section');
-
-            } else {
-                util.addClass(element, 'hidden-section');
-            }
-        });
-    }
-
-    /**
      * Set up the event listeners that manage events relative to map streaming.
      * If the page is not connected to a streaming server, the callbacks return without doing nothing, so that they
      * don't break any other functionality.
@@ -706,7 +660,7 @@
         /*
         * Manage the il2:streamerror DOM event
         */
-        window.addEventListener('il2:streamerror', function (e) {
+        window.addEventListener('il2:streamerror', function () {
             if (!state.connected) {
                 return;
             }
@@ -742,7 +696,7 @@
         if (window.location.hash !== '' && !util.isAvailableMapHash(window.location.hash, content.maps)) {
             let responseBody = null;
             /*var url = conf.apiUrl + '/servers/' + window.location.hash.substr(1);*/
-            let url = '';
+            let url;
             switch (window.location.hash) {
                 case '#virtualpilots':
                     url = 'https://hw4bdhqxg9.execute-api.eu-south-1.amazonaws.com/getStoredMap?map=virtualpilots';
@@ -878,7 +832,7 @@
     const titleControl = new L.Control.TitleControl({});
     map.addControl(titleControl);
 
-    var clearButton = new L.Control.CustomToolbar({
+    let clearButton = new L.Control.CustomToolbar({
         position: 'bottomleft',
         buttons: [
             {
@@ -947,8 +901,8 @@
                                     }
                                     if (invertCheckbox.checked !== state.colorsInverted) {
                                         state.colorsInverted = invertCheckbox.checked;
-                                        var textElements = document.getElementsByClassName('map-text');
-                                        for (var i = 0; i < textElements.length; i++) {
+                                        let textElements = document.getElementsByClassName('map-text');
+                                        for (let i = 0; i < textElements.length; i++) {
                                             if (state.colorsInverted) {
                                                 textElements[i].classList.add('inverted');
                                             } else {
@@ -958,8 +912,8 @@
                                     }
                                     if (backgroundCheckbox.checked !== state.showBackground) {
                                         state.showBackground = backgroundCheckbox.checked;
-                                        var textElements = document.getElementsByClassName('map-text');
-                                        for (var i = 0; i < textElements.length; i++) {
+                                        let textElements = document.getElementsByClassName('map-text');
+                                        for (let i = 0; i < textElements.length; i++) {
                                             if (state.showBackground) {
                                                 textElements[i].classList.remove('nobg');
                                             } else {
@@ -1061,193 +1015,7 @@
                             util.download('plan.json', JSON.stringify(exportMapState()));
                         }
                     }
-                },
-                /*{
-                    id: 'stream-button',
-                    icon: 'fa-share-alt',
-                    tooltip: content.streamTooltip,
-                    clickFn: function() {
-                        var template;
-                        if (!state.streaming && !state.connected) {
-                            template = content.streamModalTemplate;
-                            fireStreamModal();
-                        } else if (state.streaming && !state.connected) {
-                            template = content.alreadyStreamingModalTemplate;
-                            fireAlreadyStreamingModal();
-                        } else if (!state.streaming && state.connected) {
-                            template = content.alreadyConnectedModalTemplate;
-                            fireAlreadyConnectedModal();
-                        }
-                        function fireStreamModal() {
-                            map.openModal({
-                                template: template,
-                                onShow: function(e) {
-                                    document.getElementById('stream-start-button').focus();
-                                    L.DomEvent.on(document.getElementById('stream-start-button'), 'click', function() {
-                                        e.modal.hide();
-                                        fireStartModal();
-                                    });
-                                    L.DomEvent.on(document.getElementById('stream-connect-button'), 'click', function() {
-                                        e.modal.hide();
-                                        fireConnectModal();
-                                    });
-                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                        e.modal.hide();
-                                    });
-                                }
-                            });
-                        }
-                        function fireStartModal() {
-                            map.openModal({
-                                template: content.startStreamModalTemplate,
-                                onShow: function(e) {
-                                    document.getElementById('stream-start-confirm-button').focus();
-                                    L.DomEvent.on(document.getElementById('stream-start-confirm-button'), 'click', function() {
-                                        var streamName = document.getElementById('stream-name').value;
-                                        var streamPassword = document.getElementById('stream-password').value;
-                                        var streamCode = document.getElementById('stream-leader-code').value;
-                                        if (!streamName || !streamPassword || !streamCode) {
-                                            var errorElement = document.getElementById('start-stream-error');
-                                            errorElement.innerHTML = 'All fields are required. Try again.';
-                                            util.removeClass(errorElement, 'hidden-section');
-                                            return;
-                                        }
-                                        var mapState = window.escape(JSON.stringify(exportMapState()));
-                                        var response = webdis.startStream(streamName, streamPassword, streamCode, mapState);
-                                        if (response[0] !== 'SUCCESS')  {
-                                            var errorElement = document.getElementById('start-stream-error');
-                                            errorElement.innerHTML = response[1];
-                                            util.removeClass(errorElement, 'hidden-section');
-                                            return;
-                                        }
-                                        state.streaming = true;
-                                        util.addClass(document.querySelector('a.fa-share-alt'), 'streaming');
-                                        state.streamInfo = {
-                                            name: streamName,
-                                            password: streamPassword,
-                                            code: streamCode
-                                        };
-                                        e.modal.hide();
-                                    });
-                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                        e.modal.hide();
-                                    });
-                                }
-                            });
-                        }
-                        function fireConnectModal() {
-                            map.openModal({
-                                template: content.connectStreamModalTemplate,
-                                onShow: function(e) {
-                                    var streamSelect = document.getElementById('stream-select');
-                                    var streams = webdis.getStreamList();
-                                    streamSelect.options.length = 0;
-                                    for (var i=0; i < streams.length; i++) {
-                                        streamSelect.options[i] = new Option(streams[i].substring(7), streams[i].substring(7));
-                                    }
-                                    setupCheckboxTogglableElement('leader-checkbox', 'leader-hidden');
-                                    document.getElementById('stream-connect-button').focus();
-                                    L.DomEvent.on(document.getElementById('stream-connect-button'), 'click', function() {
-                                        var selectedStream = streamSelect.options[streamSelect.selectedIndex].value;
-                                        var password = document.getElementById('stream-password').value;
-                                        var code, response;
-                                        var checkbox = document.getElementById('leader-checkbox');
-                                        if (checkbox.checked) {
-                                            if (V.fails('connect-form')) {
-                                                var errorElement = document.getElementById('connect-stream-error');
-                                                errorElement.innerHTML = 'Password and code are required to connect.';
-                                                util.removeClass(errorElement, 'hidden-section');
-                                                return;
-                                            }
-                                            code = document.getElementById('stream-code').value;
-                                            response = webdis.getStreamReconnect(selectedStream, password, code);
-                                            if (response[0] !== 'SUCCESS') {
-                                                var errorElement = document.getElementById('connect-stream-error');
-                                                errorElement.innerHTML = response[1];
-                                                util.removeClass(errorElement, 'hidden-section');
-                                                return;
-                                            }
-                                            state.streamInfo.code = code;
-                                            clearMap();
-                                            importMapState(JSON.parse(response[2]));
-                                            state.streaming = true;
-                                            util.addClass(document.querySelector('a.fa-share-alt'), 'streaming');
-                                        } else {
-                                            if (V.fails('connect-form')) {
-                                                var errorElement = document.getElementById('connect-stream-error');
-                                                errorElement.innerHTML = 'Password is required to connect.';
-                                                util.removeClass(errorElement, 'hidden-section');
-                                                return;
-                                            }
-                                            response = webdis.getStreamInfo(selectedStream, password);
-                                            if (response[0] !== 'SUCCESS') {
-                                                var errorElement = document.getElementById('connect-stream-error');
-                                                errorElement.innerHTML = response[1];
-                                                util.removeClass(errorElement, 'hidden-section');
-                                                return;
-                                            }
-                                            webdis.subscribe(response[1]);
-                                            clearMap();
-                                            importMapState(JSON.parse(response[2]));
-                                            state.connected = response[1];
-                                            util.addClass(document.querySelector('a.fa-share-alt'), 'connected');
-                                            startConnectedMode();
-                                        }
-                                        state.streamInfo = {
-                                            name: selectedStream,
-                                            password: password,
-                                            code: code
-                                        };
-                                        checkButtonsDisabled();
-                                        e.modal.hide();
-                                    });
-                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                        e.modal.hide();
-                                    });
-                                }
-                            });
-                        }
-                        function fireAlreadyConnectedModal() {
-                            map.openModal({
-                                streamName: state.streamInfo.name,
-                                template: content.alreadyConnectedModalTemplate,
-                                onShow: function(e) {
-                                    document.getElementById('disconnect-button').focus();
-                                    L.DomEvent.on(document.getElementById('disconnect-button'), 'click', function() {
-                                        webdis.unsubscribe(state.connected);
-                                        state.connected = false;
-                                        util.removeClass(document.querySelector('a.fa-share-alt'), 'connected');
-                                        endConnectedMode();
-                                        e.modal.hide();
-                                    });
-                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                        e.modal.hide();
-                                    });
-                                }
-                            });
-                        }
-                        function fireAlreadyStreamingModal() {
-                            map.openModal({
-                                streamName: state.streamInfo.name,
-                                streamPassword: state.streamInfo.password,
-                                streamCode: state.streamInfo.code,
-                                template: content.alreadyStreamingModalTemplate,
-                                onShow: function(e) {
-                                    document.getElementById('stop-streaming-button').focus();
-                                    setupCheckboxTogglableElement('already-streaming-checkbox', 'already-streaming-hidden');
-                                    L.DomEvent.on(document.getElementById('stop-streaming-button'), 'click', function() {
-                                        e.modal.hide();
-                                        state.streaming = false;
-                                        util.removeClass(document.querySelector('a.fa-share-alt'), 'streaming');
-                                    });
-                                    L.DomEvent.on(e.modal._container.querySelector('.modal-cancel'), 'click', function() {
-                                        e.modal.hide();
-                                    });
-                                }
-                            });
-                        }
-                    }
-                }*/
+                }
             ]
         });
         map.addControl(importExportToolbar);
@@ -1315,8 +1083,8 @@
     * Set up the toolbars.
     * */
     setupHelpSettingsToolbar(map);
-    let importExportToolbar = setupImportExportToolbar(map);
-    let gridToolbar = setUpGridToolbar(map);
+    setupImportExportToolbar(map);
+    setUpGridToolbar(map);
 
     /*
     * Reference: https://leaflet.github.io/Leaflet.draw/docs/leaflet-draw-latest.html#l-draw-event-event
