@@ -15,7 +15,7 @@ module.exports = function(leaflet) {
             if (color === 'black' && (this._isRandomExpertIcon(type) || this._isTawIcon(type)) ) {
                 color = 'blue';
             }
-            var iconOpts = {
+            let iconOpts = {
                 iconSize: type === 're-point-active' ? [40, 60] : [32, 32],
                 iconUrl: buildIconUrl(type, color),
             };
