@@ -1,6 +1,6 @@
-var assert = require('chai').assert;
+const assert = require('chai').assert;
 
-var util = require('./util.js');
+const util = require('./util.js');
 
 describe('util', function() {
 
@@ -14,7 +14,7 @@ describe('util', function() {
             assert.isDefined(util.formatTime);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: 120,
                 expected: '2:00'
@@ -46,7 +46,7 @@ describe('util', function() {
             assert.isDefined(util.isAvailableMapHash);
         });
 
-        var mockMaps = {
+        const mockMaps = {
             stalingrad: {
                 hash: '#stalingrad',
                 selectIndex: 0
@@ -57,7 +57,7 @@ describe('util', function() {
             }
         };
 
-        var tests = [
+        const tests = [
             {
                 given: '#stalingrad',
                 expected: true
@@ -66,7 +66,7 @@ describe('util', function() {
                 given: '#none',
                 expected: false
             }
-        ]
+        ];
 
         tests.forEach(function(test) {
             it('must return '+test.expected+' given '+test.given, function() {
@@ -81,7 +81,7 @@ describe('util', function() {
             assert.isDefined(util.getSelectedMapConfig);
         });
 
-        var mockMaps = {
+        const mockMaps = {
             stalingrad: {
                 hash: '#stalingrad',
                 selectIndex: 0
@@ -92,7 +92,7 @@ describe('util', function() {
             }
         };
 
-        var tests = [
+        const tests = [
             {
                 given: '#stalingrad',
                 expected: 'stalingrad'
@@ -105,7 +105,7 @@ describe('util', function() {
                 given: '#none',
                 expected: 'stalingrad'
             }
-        ]
+        ];
 
         tests.forEach(function(test) {
             it('must return '+test.expected+' given '+test.given, function() {
@@ -120,7 +120,7 @@ describe('util', function() {
             assert.isDefined(util.defaultSpeedArray);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: {
                     speed: 300,
@@ -135,7 +135,7 @@ describe('util', function() {
                 },
                 expectedLength: 0
             }
-        ]
+        ];
 
         tests.forEach(function(test) {
             it('must return array of length '+test.expectedLength+' given '+test.given.speed+' and '+test.given.count, function() {
@@ -150,13 +150,13 @@ describe('util', function() {
             assert.isDefined(util.formatFlightLegMarker);
         });
 
-        var expected = '[300.0km|116&deg;/296&deg;|300kph|60:00]';
-        var given = {
+        const expected = '[300.0km|116&deg;/296&deg;|300kph|60:00]';
+        const given = {
             distance: 300,
             heading: 116,
             speed: 300,
             time: '60:00'
-        }
+        };
 
         it('must return '+expected+' given '+given.distance+', '+given.heading+', '+given.speed+' and '+given.time, function() {
             assert.strictEqual(util.formatFlightLegMarker(given.distance, given.heading, given.speed, given.time), expected);
@@ -169,20 +169,22 @@ describe('util', function() {
             assert.isDefined(util.isLine);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: {
-                    getLatLngs: function(){}
+                    getLatLngs: function () {
+                    }
                 },
                 expected: true
             },
             {
                 given: {
-                    getLatLng: function(){}
+                    getLatLng: function () {
+                    }
                 },
                 expected: false
             }
-        ]
+        ];
 
         tests.forEach(function(test) {
             it('must return '+test.expected+' given '+JSON.stringify(test.given), function() {
@@ -197,20 +199,22 @@ describe('util', function() {
             assert.isDefined(util.isMarker);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: {
-                    getLatLngs: function(){}
+                    getLatLngs: function () {
+                    }
                 },
                 expected: false
             },
             {
                 given: {
-                    getLatLng: function(){}
+                    getLatLng: function () {
+                    }
                 },
                 expected: true
             }
-        ]
+        ];
 
         tests.forEach(function(test) {
             it('must return '+test.expected+' given '+JSON.stringify(test.given), function() {

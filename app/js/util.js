@@ -1,17 +1,17 @@
 module.exports = (function() {
 
-    var calc = require('./calc.js');
+    const calc = require('./calc.js');
 
     return {
 
         formatTime: function(timeInSeconds) {
-            var minutes = timeInSeconds / 60;
-            var seconds = timeInSeconds % 60;
+            const minutes = timeInSeconds / 60;
+            const seconds = timeInSeconds % 60;
             return Math.floor(minutes).toFixed(0) + ':' + calc.pad(seconds, 2);
         },
 
         isAvailableMapHash: function(hash, maps) {
-            for (var map in maps) {
+            for (let map in maps) {
                 if (maps[map].hash === hash) {
                     return true;
                 }
@@ -20,7 +20,7 @@ module.exports = (function() {
         },
 
         getSelectedMapConfig: function(hash, maps) {
-            for (var map in maps) {
+            for (let map in maps) {
                 if (maps[map].hash === hash) {
                     return maps[map];
                 }
@@ -29,14 +29,14 @@ module.exports = (function() {
         },
 
         defaultSpeedArray: function(speed, count) {
-            var speedArray = [];
-            for (var i = 0; i < count; i++) {
+            const speedArray = [];
+            for (let i = 0; i < count; i++) {
                 speedArray.push(speed);
             }
             return speedArray;
         },
 
-        formatFlightLegMarker: function(distance, heading, speed, time) {
+        formatFlightLegMarker: function(distance, heading, speed, time) { // jshint ignore:line
             distance = typeof distance === 'number' ? distance.toFixed(1) : distance;
             heading = typeof heading === 'number' ? heading.toFixed(0) : heading;
             return '[' + distance + 'km|' + calc.pad(heading, 3) + '&deg;/' + calc.pad(calc.invertHeading(heading), 3) +'&deg;|' + speed + 'kph|' + time + ']';
@@ -51,7 +51,7 @@ module.exports = (function() {
         },
 
         buildGetXhr: function(url, updateFn) {
-            var xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
             xhr.open('GET', url, true);
             xhr.onreadystatechange = updateFn;
             xhr.send(null);
@@ -59,7 +59,7 @@ module.exports = (function() {
         },
 
         buildSyncGetXhr: function(url) {
-            var xhr = new XMLHttpRequest();
+            const xhr = new XMLHttpRequest();
             xhr.open('GET', url, false);
             xhr.send(null);
             return xhr;
@@ -86,7 +86,7 @@ module.exports = (function() {
             if (el.classList) {
                 el.classList.remove(className);
             } else if (this.hasClass(el, className)) {
-                var reg = new RegExp('(\\s|^)' + className + '(\\s|$)');
+                const reg = new RegExp('(\\s|^)' + className + '(\\s|$)');
                 el.className=el.className.replace(reg, ' ');
             }
         },
@@ -94,12 +94,12 @@ module.exports = (function() {
 
         // Download function taken from here https://stackoverflow.com/questions/2897619/using-html5-javascript-to-generate-and-save-a-file
         download: function(filename, text) {
-            var pom = document.createElement('a');
+            const pom = document.createElement('a');
             pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
             pom.setAttribute('download', filename);
 
             if (document.createEvent) {
-                var event = document.createEvent('MouseEvents');
+                const event = document.createEvent('MouseEvents');
                 event.initEvent('click', true, true);
                 pom.dispatchEvent(event);
             }

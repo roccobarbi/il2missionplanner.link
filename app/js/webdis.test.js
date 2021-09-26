@@ -1,10 +1,10 @@
-var assert = require('chai').assert;
+const assert = require('chai').assert;
 
 if (!CustomEvent) {
   var CustomEvent = function(name, params){ return params;};
 }
 
-var webdis = require('./webdis.js');
+const webdis = require('./webdis.js');
 
 describe('webdis', function() {
 

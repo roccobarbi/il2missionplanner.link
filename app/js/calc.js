@@ -14,8 +14,8 @@ module.exports = (function() {
     return {
 
         distance: function(a, b) {
-            var dLng = b.lng - a.lng;
-            var dLat = b.lat - a.lat;
+            const dLng = b.lng - a.lng;
+            const dLat = b.lat - a.lat;
             return Math.sqrt(dLng * dLng + dLat * dLat);
         },
 
@@ -27,20 +27,20 @@ module.exports = (function() {
         },
 
         heading: function(a, b) {
-            var radians = Math.atan2(b.lat - a.lat, b.lng - a.lng);
-            var degrees = radians * 180 / Math.PI;
+            const radians = Math.atan2(b.lat - a.lat, b.lng - a.lng);
+            let degrees = radians * 180 / Math.PI;
             degrees = this.geometricDegreesToGeographic(degrees);
             return degrees;
         },
 
         midpoint: function(a, b) {
-            var lat = (a.lat + b.lat) / 2;
-            var lng = (a.lng + b.lng) / 2;
+            const lat = (a.lat + b.lat) / 2;
+            const lng = (a.lng + b.lng) / 2;
             return L.latLng(lat, lng);
         },
 
         pad: function(num, size) {
-            var s = Math.floor(num).toFixed(0);
+            let s = Math.floor(num).toFixed(0);
             while (s.length < size) {
                 s = "0" + s;
             }
@@ -48,7 +48,7 @@ module.exports = (function() {
         },
 
         time: function(speed, distance) {
-            var kmPerSecond = speed / SECONDS_IN_HOUR;
+            const kmPerSecond = speed / SECONDS_IN_HOUR;
             return distance / kmPerSecond;
         },
 
@@ -64,15 +64,15 @@ module.exports = (function() {
         },
 
         gridLatLng: function(grid, mapConfig) {
-            var width = mapConfig.lngMax - mapConfig.lngMin;
-            var height = mapConfig.latMax - mapConfig.latMin;
-            var gridWidth = width / mapConfig.lngGridMax;
-            var gridHeight = height / mapConfig.latGridMax;
-            var gridSideLength = (gridWidth + gridHeight) / 2;
-            var gridLat = parseInt(grid.substring(0, 2));
-            var gridLng = parseInt(grid.substring(2, 4));
-            var lat = mapConfig.latMax - (gridLat*gridSideLength);
-            var lng = (gridLng*gridSideLength);
+            const width = mapConfig.lngMax - mapConfig.lngMin;
+            const height = mapConfig.latMax - mapConfig.latMin;
+            const gridWidth = width / mapConfig.lngGridMax;
+            const gridHeight = height / mapConfig.latGridMax;
+            const gridSideLength = (gridWidth + gridHeight) / 2;
+            const gridLat = parseInt(grid.substring(0, 2));
+            const gridLng = parseInt(grid.substring(2, 4));
+            const lat = mapConfig.latMax - (gridLat * gridSideLength);
+            const lng = (gridLng * gridSideLength);
             return [lat, lng];
         },
 

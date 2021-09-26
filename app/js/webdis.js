@@ -3,7 +3,7 @@
 * */
 module.exports = (function() {
 
-    var util = require('./util.js');
+    const util = require('./util.js');
 
     const
         WEBDIS_HOST = 'https://api.il2missionplanner.com:80' // TODO: make this more easily configurable (no magic numbers)
@@ -19,22 +19,22 @@ module.exports = (function() {
         },
 
         init: function() {
-            var requiredKeys = Object.keys(this.scripts);
-            var response = this.hmget('scripts', requiredKeys);
+            const requiredKeys = Object.keys(this.scripts);
+            const response = this.hmget('scripts', requiredKeys);
             if (response.length !== requiredKeys.length) {
                 return false;
             }
-            for (var i = 0; i < response.length; i++) {
+            for (let i = 0; i < response.length; i++) {
                 this.scripts[requiredKeys[i]] = response[i];
             }
             return true;
         },
 
-        publish: function(stream, password, code, state) {
-            var url = this._buildEvalshaUrl(this.scripts.publishState, [stream, password, code, state]);
-            var xhr = util.buildGetXhr(url, function(){
+        publish: function(stream, password, code, state) { // jshint ignore:line
+            const url = this._buildEvalshaUrl(this.scripts.publishState, [stream, password, code, state]);
+            const xhr = util.buildGetXhr(url, function () {
                 if (xhr.readyState === 4) {
-                    var responseBody = JSON.parse(xhr.responseText).EVALSHA;
+                    const responseBody = JSON.parse(xhr.responseText).EVALSHA;
                     if (responseBody[0] !== 'SUCCESS') {
                         this._errorHandler();
                     }
@@ -52,73 +52,73 @@ module.exports = (function() {
          * @returns {*}
          */
         hmget: function(key, fields) {
-            var url = this._buildHmgetUrl(key, fields);
-            var response = util.buildSyncGetXhr(url);
+            const url = this._buildHmgetUrl(key, fields);
+            const response = util.buildSyncGetXhr(url);
             return JSON.parse(response.responseText).HMGET;
         },
 
         subscribe: function(channel) {
-            var prev_length = 0;
-            var url = this._buildSubscribeUrl(channel);
-            var xhr = util.buildGetXhr(url, function() {
+            let prev_length = 0;
+            const url = this._buildSubscribeUrl(channel);
+            const xhr = util.buildGetXhr(url, function () {
                 if (xhr.readyState === 3) {
-                    var response = xhr.responseText;
+                    const response = xhr.responseText;
                     try {
-                        var chunk = JSON.parse(response.slice(prev_length));
+                        const chunk = JSON.parse(response.slice(prev_length));
                         if (!chunk || typeof chunk !== 'object') {
                             this._errorHandler();
                         }
-                    } catch(e) {
+                    } catch (e) {
                         this._errorHandler();
-                    }
-                    var newState = chunk.SUBSCRIBE[2];
+                    } // TODO: understand better the next line and the whole function
+                    const newState = chunk.SUBSCRIBE[2]; // jshint ignore:line
                     prev_length = response.length;
-                    var evt = new CustomEvent('il2:streamupdate', {detail: newState});
+                    const evt = new CustomEvent('il2:streamupdate', {detail: newState});
                     window.dispatchEvent(evt);
                 }
             });
         },
 
         unsubscribe: function(channel) {
-            var url = this._buildUnsubscribeUrl(channel);
+            const url = this._buildUnsubscribeUrl(channel);
             util.buildGetXhr(url, function(){});
         },
 
         getStreamList: function() {
-            var url = this._buildKeysUrl('stream:*');
-            var response = util.buildSyncGetXhr(url);
+            const url = this._buildKeysUrl('stream:*');
+            const response = util.buildSyncGetXhr(url);
             return JSON.parse(response.responseText).KEYS;
         },
 
         getStreamInfo: function(stream, password) {
-            var url = this._buildEvalshaUrl(this.scripts.getChannel, [stream, password]);
-            var response = util.buildSyncGetXhr(url);
+            const url = this._buildEvalshaUrl(this.scripts.getChannel, [stream, password]);
+            const response = util.buildSyncGetXhr(url);
             return JSON.parse(response.responseText).EVALSHA;
         },
 
         getStreamReconnect: function(stream, password, code) {
-            var url = this._buildEvalshaUrl(this.scripts.getReconnect, [stream, password, code]);
-            var response = util.buildSyncGetXhr(url);
+            const url = this._buildEvalshaUrl(this.scripts.getReconnect, [stream, password, code]);
+            const response = util.buildSyncGetXhr(url);
             return JSON.parse(response.responseText).EVALSHA;
         },
 
-        startStream: function(name, password, code, state) {
-            var url = this._buildEvalshaUrl(this.scripts.newStream, [name, password, code, state]);
-            var response = util.buildSyncGetXhr(url);
+        startStream: function(name, password, code, state) {// jshint ignore:line
+            const url = this._buildEvalshaUrl(this.scripts.newStream, [name, password, code, state]);
+            const response = util.buildSyncGetXhr(url);
             return JSON.parse(response.responseText).EVALSHA;
         },
 
         _buildEvalshaUrl: function(hash, args) {
-            var url = WEBDIS_HOST + '/EVALSHA/' + hash + '/0';
-            for (var i = 0; i < args.length; i++) {
+            let url = WEBDIS_HOST + '/EVALSHA/' + hash + '/0';
+            for (let i = 0; i < args.length; i++) {
                 url += ('/' + args[i]);
             }
             return url;
         },
 
         _buildHmgetUrl: function(key, fields) {
-            var url = WEBDIS_HOST + '/HMGET/' + key;
-            for (var i = 0; i < fields.length; i++) {
+            let url = WEBDIS_HOST + '/HMGET/' + key;
+            for (let i = 0; i < fields.length; i++) {
                 url += ('/' + fields[i]);
             }
             return url;
@@ -136,12 +136,12 @@ module.exports = (function() {
             return WEBDIS_HOST + '/PUBLISH/' + channel + '/' + value;
         },
 
-        _buildUnsubscribeUrl: function(channel, value) {
+        _buildUnsubscribeUrl: function(channel) {
             return WEBDIS_HOST + '/UNSUBSCRIBE/' + channel;
         },
 
         _errorHandler: function() {
-            var evt = new CustomEvent('il2:streamerror');
+            const evt = new CustomEvent('il2:streamerror');
             window.dispatchEvent(evt);
         }
     };
