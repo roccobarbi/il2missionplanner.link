@@ -1,14 +1,14 @@
-var assert = require('chai').assert;
+const assert = require('chai').assert;
 
-var mockLeaflet = {
-    icon: function(options) {
+const mockLeaflet = {
+    icon: function (options) {
         return {options: options};
     },
-    divIcon: function(options) {
+    divIcon: function (options) {
         return {options: options};
     }
-}
-var icons = require('./icons.js')(mockLeaflet);
+};
+const icons = require('./icons.js')(mockLeaflet);
 
 describe('icons', function() {
 

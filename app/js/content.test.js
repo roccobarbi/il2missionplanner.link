@@ -1,7 +1,7 @@
-var assert = require('chai').assert;
+const assert = require('chai').assert;
 
-var mockLeaflet = {}
-var content = require('./content.js');
+const mockLeaflet = {};
+const content = require('./content.js');
 
 describe('content', function() {
 
@@ -9,7 +9,7 @@ describe('content', function() {
         assert.isDefined(content);
     });
 
-    var tests = [
+    const tests = [
         {
             property: 'maps'
         },

@@ -1,6 +1,6 @@
-var assert = require('chai').assert;
+const assert = require('chai').assert;
 
-var calc = require('./calc.js');
+const calc = require('./calc.js');
 
 function strLatLng(latLng) {
     return '('+latLng.lat+','+latLng.lng+')';
@@ -18,7 +18,7 @@ describe('calc', function() {
             assert.isDefined(calc.distance);
         });
 
-        var tests = [
+        const tests = [
             {
                 a: {lat: 0, lng: 1},
                 b: {lat: 1, lng: 1},
@@ -26,7 +26,7 @@ describe('calc', function() {
             },
             {
                 a: {lat: 0, lng: 0},
-                b: {lat: 0, lng:-1},
+                b: {lat: 0, lng: -1},
                 expectedDistance: 1
             },
             {
@@ -49,7 +49,7 @@ describe('calc', function() {
             assert.isDefined(calc.geometricDegreesToGeographic);
         });
 
-        var tests = [
+        const tests = [
             {
                 expected: 90,
                 given: 0
@@ -85,7 +85,7 @@ describe('calc', function() {
             assert.isDefined(calc.heading);
         });
 
-        var tests = [
+        const tests = [
             {
                 a: {lat: 1, lng: 1},
                 b: {lat: 0, lng: 1},
@@ -101,7 +101,7 @@ describe('calc', function() {
                 b: {lat: 1, lng: 0},
                 expectedHeading: 270
             }
-        ]
+        ];
 
         tests.forEach(function(test) {
             it('must return '+test.expectedHeading+' given '+strLatLng(test.a)+' and '+strLatLng(test.b), function() {
@@ -116,7 +116,7 @@ describe('calc', function() {
             assert.isDefined(calc.pad);
         });
 
-        var tests = [
+        const tests = [
             {
                 num: 90,
                 digits: 3,
@@ -148,7 +148,7 @@ describe('calc', function() {
             assert.isDefined(calc.time);
         });
 
-        var tests = [
+        const tests = [
             {
                 speed: 300,
                 distance: 20,
@@ -180,7 +180,7 @@ describe('calc', function() {
             assert.isDefined(calc.maxBounds);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: {
                     latMin: 0,
@@ -214,7 +214,7 @@ describe('calc', function() {
             assert.isDefined(calc.center);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: {
                     latMax: 10,
@@ -237,7 +237,7 @@ describe('calc', function() {
             assert.isDefined(calc.center);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: {
                     grid: '0101',
@@ -270,16 +270,16 @@ describe('calc', function() {
 
         function latLngFloatEqual(given, expected) {
             const EPSILON = 0.5;
-            var latMax = expected[0] + EPSILON;
-            var latMin = expected[0] - EPSILON;
-            var lngMax = expected[1] + EPSILON;
-            var lngMin = expected[1] - EPSILON;
+            const latMax = expected[0] + EPSILON;
+            const latMin = expected[0] - EPSILON;
+            const lngMax = expected[1] + EPSILON;
+            const lngMin = expected[1] - EPSILON;
             return given[0] < latMax && given[0] > latMin && given[1] < lngMax && given[1] > lngMin;
         }
 
         tests.forEach(function(test) {
             it('must return '+JSON.stringify(test.expected)+' given '+JSON.stringify(test.given), function() {
-                var result = calc.gridLatLng(test.given.grid, test.given.map);
+                const result = calc.gridLatLng(test.given.grid, test.given.map);
                 assert(latLngFloatEqual(result, test.expected));
             });
         });
@@ -291,7 +291,7 @@ describe('calc', function() {
             assert.isDefined(calc.invertHeading);
         });
 
-        var tests = [
+        const tests = [
             {
                 given: 116,
                 expected: 296
@@ -308,7 +308,7 @@ describe('calc', function() {
 
         tests.forEach(function(test) {
             it('must return '+test.expected+' given '+test.given, function() {
-                var result = calc.invertHeading(test.given);
+                const result = calc.invertHeading(test.given);
                 assert.equal(result, test.expected);
             });
         });
