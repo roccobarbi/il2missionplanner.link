@@ -111,42 +111,11 @@
     }
 
     /**
-     * Stores the map state (including all markers and waypoints) to a JavaScript object.
-     *
-     * @returns {{routes: *[], mapHash: *, points: *[]}}
-     */
-    function exportMapState() {
-        const saveData = {
-            mapHash: window.location.hash,
-            routes: [],
-            points: []
-        };
-        drawnItems.eachLayer(function(layer) {
-            const saveLayer = {};
-            if (util.isLine(layer)) {
-                saveLayer.latLngs = layer.getLatLngs();
-                saveLayer.name = layer.name;
-                saveLayer.speed = layer.speed;
-                saveLayer.speeds = layer.speeds;
-                saveData.routes.push(saveLayer);
-            } else if (util.isMarker(layer)) {
-                saveLayer.latLng = layer.getLatLng();
-                saveLayer.name = layer.name;
-                saveLayer.type = layer.type;
-                saveLayer.color = layer.color;
-                saveLayer.notes = layer.notes;
-                saveData.points.push(saveLayer);
-            }
-        });
-        return saveData;
-    }
-
-    /**
      * If the user is streaming his map, publish the current state, so that anyone who subscribed to it can see it.
      */
     function publishMapState() {
         if (state.streaming) {
-            const saveData = exportMapState();
+            const saveData = util.exportMapState(drawnItems);
             webdis.publish(state.streamInfo.name, state.streamInfo.password,
                 state.streamInfo.code, window.escape(JSON.stringify(saveData)));
         }
@@ -1012,7 +981,7 @@
                     tooltip: content.exportTooltip,
                     clickFn: function () {
                         if (!mapIsEmpty()) {
-                            util.download('plan.json', JSON.stringify(exportMapState()));
+                            util.download('plan.json', JSON.stringify(util.exportMapState(drawnItems)));
                         }
                     }
                 }
