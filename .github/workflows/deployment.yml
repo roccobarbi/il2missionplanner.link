@@ -22,3 +22,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_SECRET }}
           AWS_DEFAULT_REGION: eu-south-1
         run: aws s3 cp ./dist s3://il2missionplanner.link/dist --acl bucket-owner-full-control --recursive
+      - name: Clear Cache
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_ACCESS_KEY_SECRET }}
+        run: aws cloudfront create-invalidation --distribution-id E1G1XBZJI2UXF4 --paths "/*"
