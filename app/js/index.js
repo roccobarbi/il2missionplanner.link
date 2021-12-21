@@ -2,6 +2,8 @@
 
     'use strict';
 
+    let timing_runStart = Date.now();
+
     const content = require('./content.js');
     const calc = require('./calc.js');
     const util = require('./util.js');
@@ -52,6 +54,8 @@
         changing: false,
         streamInfo: {}
     };
+
+    window.dataLayer = window.dataLayer || [];
 
     // Patch leaflet content with custom language
     L.drawLocal = content.augmentedLeafletDrawLocal;
@@ -1179,5 +1183,12 @@
     setupStreamingEventListeners();
 
     checkButtonsDisabled();
+
+    let timing_runEnd = Date.now();
+
+    window.dataLayer.push({
+        'event': 'index.js run',
+        'duration': timing_runEnd - timing_runStart
+    });
 
 })();
